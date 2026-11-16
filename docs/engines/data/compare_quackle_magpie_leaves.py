@@ -43,5 +43,3 @@ for L in range(1,7):
     c=[w for w in common if len(w)==L]
     d=[q[w]-k[w] for w in c]
     print('len',L,'n',len(c),'mean(q-k) %.2f'%(sum(d)/len(d)),'rms %.2f'%math.sqrt(sum(x*x for x in d)/len(d)))
-for w in ['?','S','Z','Q','V','U','QU','ERS','?S','AEINST','EIIOU','?ERS']:
-    print(w, round(q.get(w,float('nan')),2), round(k.get(w,float('nan')),2))

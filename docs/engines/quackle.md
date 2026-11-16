@@ -17,13 +17,14 @@ read from the clone in `reference/quackle` (working tree at the pin). Issues are
 - **What it is:** the 2006-era Championship Player, unchanged in algorithm. Static equity = score + superleave
   + small heuristics; a 2-ply sim of 14 candidates with a fixed iteration count; a 1–2-in-bag pre-endgame that
   enumerates opponent racks; and a heuristic endgame (greedy playouts plus a one-reply minimum), not a search.
-- **Does well:** simple, readable, small (core ≈11k lines of C++). Its superleaves cover the full 1–6-tile lattice
-  and agree closely with MAGPIE's CSW24 leaves (Pearson 0.977, measured below). The pre-endgame is exhaustive over
-  opponent racks.
+- **Does well:** simple, readable, small: 16,444 lines in the top-level `*.cpp` and `*.h` (`cat *.cpp *.h | wc -l`;
+  11,194 for `*.cpp` alone). Its superleaves cover the full 1–6-tile lattice and correlate 0.977–0.979 with the
+  CSW24 leaves MAGPIE, Macondo and wolges load (measured below). The pre-endgame is exhaustive over opponent racks.
 - **Does badly:** no rack inference, no common random numbers, a crude screening rule for sim stopping, a
-  win-table leaf keyed only by spread and unseen count, and an endgame that is not exact. Its budget is iteration
-  counts, so on current hardware it uses a small fraction of its 66 s.
-- **Active work** (2026, John Fultz) is threading, CI and packaging, not playing strength.
+  win-table leaf keyed only by spread and unseen count, and an endgame that is not exact. Its sim budget is an
+  iteration count with a 66 s cap.
+- **2026 work** (John Fultz): sim threading and per-playahead randomisation (`116134e`), regression tests, the
+  CMake/CI migration and packaging. No change to the search rules or the strategy tables.
 - **What we would take:** nothing in code. It is a fixed, well-known opponent for strength tests, and a source of
   ideas whose value MAGPIE has already measured (pre-endgame bag adjustment, opening placement table).
 
@@ -44,13 +45,13 @@ MAGPIE column from magpie.md (CLI default / PlayChooser where they differ).
 
 | Setting | Quackle CP | Where | MAGPIE |
 | --- | --- | --- | --- |
-| Time per turn | 66 s cap, checked between candidates | resolvent.cpp:95; bogowinplayer.cpp:213-217 | sim `-tlim` 60 s; PlayChooser splits the clock |
+| Time per turn | sim: 66 s cap, checked between candidates; pre-endgame: 396 s; endgame: no limit | resolvent.cpp:95; bogowinplayer.cpp:213-217; preendgame.cpp:57-62; endgame.cpp:263-400 | sim `-tlim` 60 s; PlayChooser splits the clock |
 | Candidates | top 14 static, within 33 equity of best | bogowinplayer.cpp:46, 137-148; sim.cpp:209-224 | 100 / 15 |
 | Plies after candidate | 2; to game end if bag ≤ 14 | bogowinplayer.cpp:138-141; sim.cpp:418-422 | 5 / 2 |
 | Samples per candidate | 132 (2×66); 330 (5×66) if within 1.96·35/√132 bogopoints of best | bogowinplayer.cpp:38-39, 194-196; bogowinplayer.h:67-81 | ≥500 / ≥30, then BAI |
 | Stopping rule | after the last candidate or past 66 s | bogowinplayer.cpp:177-218 | GK16 GLR, δ = 0.01 |
 | Opponent rack | uniform from unseen; no inference | sim.cpp:788-819; bogowinplayer.cpp:114-132 | inferred, 5-point margin |
-| Common random numbers | no | sim.cpp:604-607 | yes, plus bag cycling |
+| Common random numbers | no: one candidate is simmed at a time | bogowinplayer.cpp:167, 188; sim.cpp:604-607 | yes, plus bag cycling |
 | Sim leaf | `bogowin(spread + leaves, bag + 7)` | sim.cpp:716-735 | win% table + 0.5·sigmoid(spread) |
 | Pre-endgame trigger | 1–2 in bag | preendgame.cpp:43-47; resolvent.cpp:54-58 | 1–4 (to 7 if candidates leave ≤4) |
 | Pre-endgame candidates / time | 30 (from a 66-iteration nested sim) / 396 s | preendgame.cpp:32-33, 57-62, 96 | all, cascade; unlimited |
@@ -86,36 +87,59 @@ formula (evaluator.cpp:77-78).
 lexicon, then `default` (datamanager.cpp:145-160). The backup is `default_english` for 26-letter A–Z alphabets
 (quacker/settings.cpp:391; test/testharness.cpp:273). So a CSW24 game loads:
 
-| File | From | Content |
-| --- | --- | --- |
-| `superleaves` | `data/strategy/csw/` | binary: length, tiles, 2-byte value in 1/256 points, offset −128 (strategyparameters.cpp:205-241) |
-| `syn2`, `vcplace`, `worths` | `data/strategy/default_english/` | text tables; used only for leaves not in the superleave table and for opening placement |
-| `bogowin` | `data/strategy/default/` | win probability by lead (−300…300) and unseen tiles; 55,893 lines, unseen 1–93 (counted by us) (strategyparameters.cpp:87-115; strategyparameters.h:60-62, 122-143) |
+| File | From | sha256 (at `35e11bb`) | Content |
+| --- | --- | --- | --- |
+| `superleaves` | `data/strategy/csw/` | `cf20c385…3797` | binary: length, tiles, 2-byte value in 1/256 points, offset −128 (strategyparameters.cpp:205-241) |
+| `syn2` | `data/strategy/default_english/` | `901778ed…d1a7` | text; leave formula fallback only |
+| `vcplace` | `data/strategy/default_english/` | `46339c24…e8f4` | text; opening placement |
+| `worths` | `data/strategy/default_english/` | `94cd0d3a…a349` | text; leave formula fallback only |
+| `bogowin` | `data/strategy/default/` | `bc810cbe…b892` | win probability by lead (−300…300) and unseen tiles (1–93); 55,893 lines (counted by us). The accessor takes a `blanks` argument it ignores, so the table has 2 keys (strategyparameters.cpp:87-115; strategyparameters.h:60-62, 122-143) |
 
-**How they were made.** The code does not say. Two tools ship that look like leave makers: `leavecalc.c`
-("old, unused reference code") builds random boards from static self-play and then plays 3 static plies from a
-given leave (leavecalc.c:1, 20-157); `ruby-leavestuff.tgz` holds scripts that merge files called `openers`,
-`static` and `eight-work` (`realshit.rb`, `useboth.rb`). History: "Remove obsolete or useless strategy files" and
+Full hashes are in `docs/engines/data/quackle-vs-magpie-leaves.txt` (superleaves) and were computed with `sha256sum`
+on the clone.
+
+**How they were made.** The code does not say. Three tools ship that look like leave makers:
+
+- `leavecalc.c` ("old, unused reference code") builds random boards from static self-play, then plays 3 static
+  plies from a given leave (leavecalc.c:1, 20-157).
+- The harness has a `leavecalc` mode, described as "spit out roughish values of leaves in 'leaves' file". It runs 10
+  self-play iterations per leave, with a random cut-off of 14–92 tiles left (test/testharness.cpp:117, 227-228,
+  294-333, 356-380).
+- `ruby-leavestuff.tgz` holds scripts that merge files called `openers`, `static` and `eight-work` (`realshit.rb`,
+  `useboth.rb`). History: "Remove obsolete or useless strategy files" and
 "Fix Collins superleaves" (2014, `2cf9747`, `1462523`); TWL06 superleaves copied to `default_english` (2015,
 `150e9f7`, fixing quackle/quackle#10); "There's only two distinct superleaves files" (2019, `e29118f`). Which Collins
 edition the CSW superleaves were made for, and by what method: UNVERIFIED. quackle/quackle#136 (open, 2025) asks to
 adopt Macondo's leaves; quackle/quackle#67 (open, 2017) asks for a better static evaluator.
 
-**Comparison with MAGPIE's CSW24 leaves** (measured; table in Measurements):
+**Comparison with CSW24 leaves** (measured; output with sha256s in
+`docs/engines/data/quackle-vs-magpie-leaves.txt`). Two reference tables:
 
-- Both tables have exactly 914,624 entries with the same keys, i.e. the full lattice of 1–6-tile leaves with
-  blanks.
-- Pearson correlation 0.977.
-- Quackle is lower by 2.7 points on average (mean −5.35 vs −2.68). The gap grows with leave length: −1.1 for 1 tile,
-  −1.8 for 2, −2.3 for 3, −2.6 to −2.7 for 4–6. The RMS difference grows from 1.9 to 4.6 points.
-- Single tiles: blank 27.95 vs 27.97; S 8.56 vs 9.37; Z 3.89 vs 9.54; Q −8.85 vs −6.57.
+- **(a)** MAGPIE's shipped `CSW24.klv2` (`1937df3f…`, MAGPIE-DATA `data-20260925`). This is the reference for MAGPIE
+  as shipped. It is reported to be census-blended; UNVERIFIED here.
+- **(b)** The original `CSW24.klv2` (`b0ef5f66…`, our `data/wolges/CSW24.klv2`), which Macondo and wolges load.
 
-**Inference.** The two tables rank leaves almost the same way, so at equal search the leave table is unlikely to be
-where most of a strength gap lies. Z is the largest single disagreement. Z is worth more in Collins than in older
-lists, which fits Quackle's table being made for an older lexicon (UNVERIFIED). Because the gap grows with leave
-length, Quackle penalises keeping tiles more than MAGPIE does, so its static player favours playing more tiles.
-MAGPIE's `-pegadjust` table is "laid out as Quackle's was" (magpie.md), i.e. it descends from the timing term
-above.
+| | vs (a) MAGPIE shipped | vs (b) original |
+| --- | --- | --- |
+| Keys | 914,624 = 914,624 (full 1–6-tile lattice with blanks) | same |
+| Pearson | 0.977 | 0.979 |
+| Mean value, Quackle vs table | −5.35 vs −2.68 | −5.35 vs −3.92 |
+| Mean (Quackle − table), 1 / 3 / 6 tiles | −1.12 / −2.31 / −2.67 | −0.44 / −0.98 / −1.46 |
+| RMS difference, 1 / 5 / 6 tiles | 1.88 / 4.19 / 4.57 | 1.42 / 3.38 / 3.88 |
+
+Example values against (a): blank 27.95 vs 27.97; S 8.56 vs 9.37; Z 3.89 vs 9.54; Q −8.85 vs −6.57. Z is the
+largest single-tile disagreement against both tables (−5.7 vs (a), −4.5 vs (b)).
+
+**Inference.**
+- **Ranking is close, not identical.** The tables order leaves similarly, but RMS differences of 3.4–4.6 points on
+  5–6-tile leaves are the size of typical gaps between top candidate moves. The leave table could therefore change
+  many move choices, and we cannot rule it out as a source of a strength gap without a match.
+- **Length bias.** Quackle is lower than both tables, more so for longer leaves: about twice as much against (a) as
+  against (b). So it penalises keeping tiles more, and its static player favours playing more tiles.
+- **Lexicon age.** Z is worth more in Collins than in older lists, which fits Quackle's table being made for an
+  older lexicon (UNVERIFIED).
+- **Descent.** MAGPIE's `-pegadjust` table is "laid out as Quackle's was" (magpie.md), i.e. it descends from the
+  timing term above.
 
 ## Simulation (`SmartBogowin` + `Simulator`)
 
@@ -130,13 +154,16 @@ above.
   (bogowinplayer.cpp:158-211; bogowinplayer.h:67-81). For the Championship Player that is 132 iterations, or 330
   for close ones. The first candidate is never extended past 132.
 - **Stopping:** the clock is checked only after each candidate. Past 66 s the remaining candidates are skipped
-  (bogowinplayer.cpp:213-217). There is no other stopping rule; a fast machine finishes all candidates early.
+  (bogowinplayer.cpp:213-217). There is no other stopping rule. Once every candidate has had its samples, the
+  turn ends whatever the clock says (bogowinplayer.cpp:177-220).
 - **Bogopoints** maps a win probability back to a spread equivalent through the `bogowin` table at the current
   unseen count, minus the current spread. The constant 35 is an assumed standard deviation in points
   (bogowinplayer.cpp:53-81, 194).
 - **One iteration** (`simulateOnePosition`, sim.cpp:600-736):
   1. Fresh random opponent rack from the unseen tiles and a fresh draw order for every playahead
-     (sim.cpp:604-607, 788-834). No common random numbers between candidates.
+     (sim.cpp:604-607, 788-834). This dates from `116134e` (2026-07-18). Before it, all candidates in one
+     iteration shared a draw. The CP never had common random numbers either way, because it sims one candidate at
+     a time (bogowinplayer.cpp:167, 188).
   2. Moves after the candidate are each side's static best (`staticBestMove`, i.e. `kibitz(1)`; sim.cpp:639-644;
      game.cpp:284-288).
   3. The leave of each side's last move is added (+ own, − opponent) as `residual` (sim.cpp:665-699). That is the
@@ -159,11 +186,11 @@ above.
 | Aspect | Quackle CP | MAGPIE | Inference: which way, and how much |
 | --- | --- | --- | --- |
 | Allocation | sequential screen with fixed min/max counts | BAI top-two, GLR stop | MAGPIE spends samples where the decision is close. Quackle's leader keeps only 132 samples, so a lucky early leader can survive. Edge to MAGPIE. |
-| Noise | independent draws per playahead | CRN + bag cycling + paired variance | At equal samples MAGPIE's comparisons are far less noisy. Edge to MAGPIE. |
+| Noise | independent draws; candidates simmed one at a time | CRN + bag cycling + paired variance | At equal samples MAGPIE's comparisons are far less noisy. Edge to MAGPIE. |
 | Opponent rack | uniform | inferred (5-point margin) | BestBot saw no measurable gain from Macondo's inference (magpie.md). Probably small. |
 | Depth | 2 plies, to end at ≤14 in bag | 5 (CLI) / 2 (PlayChooser) | At 2 plies they are equal. The to-end rollouts at 3–14 in bag are greedy, so they may add bias as well as depth. Unclear. |
 | Leaf | `bogowin(spread+leave, unseen)` | win% by spread, bag and both racks, blended with sigmoid(spread) | Similar in kind. MAGPIE's spread term separates moves in decided games. Small edge to MAGPIE. |
-| Total samples | ≤14×330 = 4,620 rollouts | about 26,000 2-ply rollouts/s on one thread (magpie.md, #894) | The CP's full search is about 0.2 s of one MAGPIE thread. At equal wall time MAGPIE searches orders of magnitude more. This is likely the largest edge. |
+| Total samples | ≤132 + 13×330 = 4,422 rollouts (the first candidate is never extended) | about 38 µs per 2-ply rollout on one thread (magpie.md, jvc56/MAGPIE#894; hardware not stated, not ours) | At that rate the CP's mid-game search is about 0.17 s of one MAGPIE thread. With ≤14 in the bag the rollouts run to game end and cost more. If that holds on our machine, MAGPIE searches orders of magnitude more at equal wall time, likely the largest edge. Unmeasured. |
 
 ## Pre-endgame (`Preendgame`)
 
@@ -220,7 +247,9 @@ report says the CP rarely exchanges on the opening turn compared with another pr
 
 ## Time management and threading
 
-Fixed per-turn budget in iterations; `secondsPerTurn` is only a cap (above). No clock awareness, no banking.
+The sim budget is a fixed iteration count with `secondsPerTurn` as a cap. **66 s is not a per-turn bound for the
+CP:** the pre-endgame may run 396 s (preendgame.cpp:57-62), and the endgame has no time limit
+(endgame.cpp:263-400). No clock awareness, no banking.
 Twenty Second Player: 20 s → 40/100 iterations; Five Minute: 300 s → 600/1500 (resolvent.cpp:100-114). Sim threads
 as above; endgame single-threaded.
 
@@ -240,16 +269,29 @@ UNVERIFIED.
 
 | What | Number | Settings | Hardware | Source | Measured by |
 | --- | --- | --- | --- | --- | --- |
-| Leave tables, Quackle CSW vs MAGPIE CSW24 | 914,624 = 914,624 keys; Pearson 0.977; mean −5.35 vs −2.68; RMS diff 1.9 (1 tile) to 4.6 (6 tiles) | `python3 -I docs/engines/data/compare_quackle_magpie_leaves.py reference/quackle/data/strategy/csw/superleaves data/magpie/data/lexica/CSW24.klv2` (MAGPIE-DATA `data-20260925`) | i5-9500T, 6 cores, Linux | `docs/engines/data/quackle-vs-magpie-leaves.txt` | us |
-| CP search size | ≤14 candidates × ≤330 iterations, 3 moves each | read from code (above) | n/a | bogowinplayer.cpp:38-46, 137-211 | us (code reading) |
+| Leave tables, Quackle CSW (`cf20c385…`) vs MAGPIE shipped CSW24 (`1937df3f…`) | Pearson 0.977; mean −5.35 vs −2.68; RMS diff 1.88 (1 tile) to 4.57 (6 tiles) | `sh docs/engines/data/run_leave_comparison.sh` from the main checkout root | i5-9500T, 6 cores, Linux | `docs/engines/data/quackle-vs-magpie-leaves.txt` | us |
+| Leave tables, Quackle CSW vs original CSW24 (`b0ef5f66…`, Macondo/wolges) | Pearson 0.979; mean −5.35 vs −3.92; RMS diff 1.42 to 3.88 | same script | same | same file | us |
+| CP mid-game search size | ≤4,422 rollouts (132 + 13×330); 2 plies after the candidate, or to game end with ≤14 in bag | read from code | n/a | bogowinplayer.cpp:38-46, 137-211 | us (code reading) |
 
-Not measured yet: moves/s, rollouts/s and endgame times on our machine (needs the Qt build; docs/harness).
+Not measured yet: the CP's actual seconds per move, rollouts/s and endgame times on our machine. The speed claims in
+this dossier stay inference until the baseline records the CP's seconds per move in `docs/harness/baseline.md`.
 
 ## History
 
 Public git starts in 2013 with "Initial git commit." (`9306cb6`, Jason Katz-Brown). Authors in file headers: Jason
-Katz-Brown, John O'Laughlin, John Fultz (2005–2019). Commits per year: 2013–16 about 20–50, 2019: 67 (threaded sims
-`f2e4233`, strategy dedupe), 2026: 90 (threading rework, QoS, CI, macOS packaging). Of 31 PRs, none touch the
+Katz-Brown, John O'Laughlin, John Fultz (2005–2019).
+
+Commits per year, counted by the date column of `reference/history/quackle/commits.tsv` (344 rows; `awk` on
+column 2), are 2013–16 about 20–50 per year, 2019: 67 and 2026: 90. The scope review counted 66 and 88 by another
+method; not reconciled.
+
+- 2019: threaded sims (`f2e4233`, candidates on separate threads) and the strategy dedupe. `b50b907`
+  (2019-08-06) fixed a sim regression from that refactor that double-weighted some results. Its message says the
+  CP "could make some bone-headed plays with this regression", e.g. preferring UP or CUP to a bingo from ACINPU?.
+- 2026: threading rework (per-iteration chunks, QoS), per-playahead randomisation (`116134e`), regression tests,
+  CMake/CI and macOS packaging.
+
+Of 31 PRs, none touch the
 algorithms (`reference/history/quackle/prs-index.tsv`). The sim, pre-endgame and endgame logic predate the public
 history. That the CP's settings date from a 2006 Toronto match is suggested by the class name `TorontoPlayer` only;
 UNVERIFIED.
@@ -257,9 +299,9 @@ UNVERIFIED.
 ## Inference
 
 - The Championship Player is a strength reference by reputation, not by recent measurement. Its algorithm is
-  frozen, and its budget is a fixed sample count that modern hardware finishes well inside 66 s. "Beat the CP at
-  66 s" is therefore a much weaker bar than its name suggests. A fair test should also run it at a fixed, matched
-  iteration count.
+  frozen, and its mid-game budget is a fixed sample count. We expect current hardware to finish that well inside
+  66 s (UNVERIFIED until the baseline measures it). If so, "beat the CP at 66 s" is a much weaker bar than its name
+  suggests. A fair test should also run it at a fixed, matched iteration count.
 - Of the differences from MAGPIE, sample efficiency (BAI + CRN) and raw throughput should dominate. After them come
   the 3–4-in-bag pre-endgame and the deeper endgame. The leave table and the lack of inference should matter
   least.
@@ -279,34 +321,44 @@ Same numbering as magpie.md:
 | E5 | Inference | none (bogowinplayer.cpp:114-132; sim.cpp:803) | n/a |
 | E6 | Endgame / PEG leaf | greedy static playout to game end (endgame.cpp:224-247, 310-332); PEG: win of the `Resolvent` reply (preendgame.cpp:178-188) | per endgame candidate × reply; per PEG candidate × rack |
 
+Per-position cost of each site: unmeasured; Quackle isn't a fork candidate.
+
 **Inference.** Every site goes through one global evaluator (`QUACKLE_EVALUATOR`, game.cpp:498-516), so a learned
-evaluator could be dropped in with little code (a day or two). But Quackle's slow movegen and simple search would
-cap what it could show. It is not a useful testbed for a neural eval.
+evaluator would need little code. But Quackle's movegen (no shadow pruning) and simple search would cap what it
+could show, so it is not a useful testbed for a neural eval.
 
 ## Relevance to the three decisions
 
-1. **What to fork.** Not Quackle. It is GPL-3.0 like MAGPIE, much slower (no shadow pruning, map-based leaves),
-   and weaker in every search component, and its algorithms are frozen. Nothing in it is missing from MAGPIE.
-2. **Where a neural eval pays off.** The CP reaches championship level with a 2-ply sim, a 3-key win table and
-   board-blind leaves. That suggests most of the remaining gains lie in sample efficiency and endgame search
-   (MAGPIE already has those) and then in a board-aware leaf (E4). The two leave tables agree at 0.977, and
-   MAGPIE reports leave generations near saturation. Together these point the same way: leaves are not where a
-   net pays first.
+Facts used: GPL-3.0; no shadow pruning, map-based leaves; the 2-key `bogowin` leaf
+(strategyparameters.h:122); per-phase time limits (Time management); the leave comparison (Measurements).
+
+### Inference
+
+1. **What to fork.** Not Quackle. It is GPL-3.0 like MAGPIE and weaker in every search component, and its
+   algorithms are frozen. It is probably much slower (no shadow pruning, map-based leaves; unmeasured). Nothing in
+   it is missing from MAGPIE.
+2. **Where a neural eval pays off.** By reputation the CP plays at championship level (UNVERIFIED) with a 2-ply
+   sim, a 2-key win table (lead, unseen) and board-blind leaves. If so, most of the remaining gains lie in sample
+   efficiency and endgame search, which MAGPIE already has, and then in a board-aware leaf (E4). The leave tables
+   correlate at 0.977–0.979 but differ by 3.4–4.6 points RMS on long leaves, so this comparison neither shows nor
+   rules out a payoff from better leaves. MAGPIE's own report that leave generations are near saturation still
+   points away from leaves as the first place for a net.
 3. **How we prove we are stronger.** Use the CP as a fixed historical baseline, driven by the harness adapter
    (docs/harness/reuse-check.md §3). Pin three things:
    - the SHA;
-   - the strategy files (CSW superleaves of unknown edition, `default/bogowin`);
-   - thread count. Threading changed the CP's speed in 2026 (`42c5d25`, `763e96f0`), not its choices.
+   - the strategy files by sha256 (table above);
+   - thread count. Threading changed the CP's speed in 2026 (`42c5d25`, `763e96f0`), not its search rules.
 
-   Report results at its native 66 s and at matched wall time. Because its budget is iteration-bound, the 66 s
-   setting does not give it 66 s of search. The main bar remains MAGPIE/BestBot.
+   Report results at its native setting and at matched wall time. Its 66 s is not a per-turn bound: pre-endgame
+   turns may take up to 396 s and endgame turns are unbounded. A clocked match must allow for that or cap those
+   phases. The main bar remains MAGPIE/BestBot.
 
 ## Open questions
 
 - Which lexicon edition and method produced `data/strategy/csw/superleaves` and `default/bogowin`? Ask the
   authors, or compare with CSW07/CSW12-era tables. (Code and commits give no answer.)
-- How long does a CP turn actually take on our machine at 1 and 6 threads? If it is well under 66 s, record the
-  effective budget. To be measured in `docs/harness/builds.md`.
+- How long does a CP turn actually take on our machine at 1 and 6 threads, by phase (mid-game, pre-endgame,
+  endgame)? To be measured in `docs/harness/baseline.md`. Until then the speed statements here are inference.
 - Is quackle/quackle#100 (1-in-bag win% inverted) still reproducible at `35e11bb`? The attached GCG is linked in the
   issue.
 - What is the CP's head-to-head win% against MAGPIE at equal wall time and at equal rollouts? No published number
