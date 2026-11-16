@@ -15,3 +15,6 @@ Also relevant: [woogles-io/liwords](https://github.com/woogles-io/liwords) (AGPL
 the Woogles server; useful for game formats and bot integration, not an engine.
 
 Dossiers are created as research starts; missing links are expected.
+
+Headless play and match-harness reuse for Quackle, Macondo, MAGPIE and wolges:
+[../harness/reuse-check.md](../harness/reuse-check.md).
