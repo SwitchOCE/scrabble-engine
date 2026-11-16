@@ -17,3 +17,6 @@ the Woogles server; useful for game formats and bot integration, not an engine.
 Lexicon for all matches and benchmarks: Collins, edition CSW24 (see "Decided by the project owner" in `../research-plan.md`).
 
 Dossiers are created as research starts; missing links are expected.
+
+Headless play and match-harness reuse for Quackle, Macondo, MAGPIE and wolges:
+[../harness/reuse-check.md](../harness/reuse-check.md).
