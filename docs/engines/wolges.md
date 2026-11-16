@@ -122,7 +122,10 @@ Facts only here; effort estimates are under Inference.
   shuffled each iteration (`#280` `997ddd23`). Win weight 10, rising to 10,000 when the plies can reach the
   end (`src/simmer.rs:406-418`). Ply-1 reply from the start-board lane bests (`src/simmer.rs:757`).
 - **Missing vs MAGPIE:** sampling is round-robin over the survivors (successive elimination), not top-two
-  IDS with a GLR/GK16 stopping rule (`magpie.md` "Allocation and stopping"); no bag cycling of the opponent's
+  IDS with a GLR/GK16 stopping rule (`magpie.md` "Allocation and stopping"). wolges once had an adaptive
+  allocator: added in `andy-k/wolges#77` (`d3b1f92a`, 2026-07-14), then removed along with its confidence stop
+  in `#147` (commits `349588d8` "drop the simmer's adaptive allocator" and `4bc69123` "drop the simmer's
+  confidence stop", 2026-09-27). The commit bodies say only what changed ("Every rollout iteration samples every surviving candidate"; "A decision always runs its rollout budget"; `reference/history/wolges/commits-full.txt:6665-6676`), not why. No bag cycling of the opponent's
   rack (MAGPIE #764); no best-move carry across rollouts (MAGPIE #824; wolges has lane bests at ply 1 only);
   utility is spread + weighted win%, not MAGPIE's win% + 0.5·sigmoid(spread); the win% table has no
   full-state key (MAGPIE #703); no PAT inside rollouts.
@@ -143,11 +146,14 @@ Facts only here; effort estimates are under Inference.
 
 ### Pre-endgame
 
-- **Has:** exact PEG-1 with a committed move (no peeking) and exchanges (`src/endgame.rs:4919-4970`;
-  `andy-k/wolges#91` `f3e09d68`, `#101` `2267824a`; `lab/endgame.txt:116-263`). The N-in-bag `solve_peg`
-  (`andy-k/wolges#436` `f726d827`, 2026-11-04) has two opponent models: `InfoSets`, where each player chooses
-  blind until the bag empties, and `RandomDraws`, a faster approximation. It values moves on threads
-  (`#437`, `#440`; `src/endgame.rs:4969-4985`, `6160-6177`). `lab/endgame.txt:176-184` still says PEG-2 and
+- **Has:** PEG-1 (`src/endgame.rs:4919-4970`; `andy-k/wolges#91` `f3e09d68`, `#101` `2267824a`;
+  `lab/endgame.txt:116-263`). It is exact with a committed move (no peeking) when no exchange is legal. When
+  an exchange is legal with one tile in the bag (e.g. Spanish), it uses the clairvoyant aggregate instead,
+  which is an upper bound (`src/endgame.rs:4956-4960`; `lab/endgame.txt:252-263`). The N-in-bag `solve_peg`
+  came in `andy-k/wolges#436` (`f726d827`, 2026-11-04) with the `RandomDraws` model: only the first move is
+  blind, then both racks are known. `#444` (`535ddf8e`; commit `62f941a5` "solve the pre-endgame over what
+  each player knows") added `InfoSets`, where each player chooses blind until the bag empties. It values
+  moves on threads (`#437`, `#440`; `src/endgame.rs:4969-4985`, `6160-6177`). `lab/endgame.txt:176-184` still says PEG-2 and
   above are "not attempted"; the code is newer than the note.
 - **Missing vs MAGPIE:** no playing seat calls it: N-in-bag runs only from the `endgame` binary
   (`src/main_endgame.rs:1606-1618`). There is no time-limited cascade or top-k staging like MAGPIE's
@@ -163,17 +169,19 @@ Facts only here; effort estimates are under Inference.
   over self-play moves (`infer-fit`, `src/main_leave.rs:7586-7600`, `7623`; `andy-k/wolges#311` `0b36fd98`).
   Exchanges and passes are their own move kinds in the fit (`src/main_leave.rs:7580-7584`). Fed into sims,
   self-play included (`#312` `0c6d59f4`), on every core (`#323` `d544afb9`).
-- **Missing vs MAGPIE:** nothing found. MAGPIE's merged inference is a hard 5-point cutoff with uniform
-  weights; its softmax version is an open PR (MAGPIE #938; `magpie.md`). No strength measurement of wolges
-  inference was found.
+- **Missing vs MAGPIE:** nothing found. The design differs: MAGPIE's merged inference accepts a leave if
+  the play was within 5 points of best and weights each accepted leave by its draw count. Its softmax version
+  is an open PR (MAGPIE #938; `magpie.md`). Neither project has published a strength measurement of its
+  inference.
 
 ### Autoplay / self-play
 
 - **Has:** `leave compare` plays mirrored game pairs with per-seat pickers `hasty`, `dynamic`, `deft` (a
   bingo-lane-aware greedy with endgame look-ahead) or `simmer`, per-seat win% tables, plies and rollouts, and
   `--sim-threads`. Runs are deterministic from the seed (`src/main_leave.rs:340-430`, `6632-6645`;
-  `lab/simmer.txt:47-94`; `andy-k/wolges#30` `fb5977cf`). `auto` plays hasty against simmer and can harvest
-  endgame positions (`src/main_auto.rs:139-167`; `lab/endgame.txt:50-66`).
+  `lab/simmer.txt:47-94`; `andy-k/wolges#30` `fb5977cf`). `auto` builds a simmer for seat 1 and then replaces it
+  with hasty (`if true`), so it plays hasty vs hasty (`src/main_auto.rs:139-155`). It can harvest endgame
+  positions (`lab/endgame.txt:50-66`).
 - **Missing vs MAGPIE:** no seat can use the exact endgame or PEG (end pickers are only `hasty` or `deft`,
   `src/main_leave.rs:6640-6645`); no clocked games with overtime (MAGPIE PlayChooser); no game-per-thread
   vs all-threads-per-game modes; no distributed client (MAGPIE `contribute`/birdtest); no GCG export of
@@ -200,76 +208,95 @@ Facts only here; effort estimates are under Inference.
 
 ## Measurements
 
-None by us. Movegen and sim speed of wolges vs MAGPIE: **to be measured in `docs/harness/builds.md`** (a
-separate agent is measuring).
+Our numbers are in `docs/harness/builds.md`, read from the build branch `worktree-agent-ab55d5660fd00f0c4` at
+`030b414`. It was not on main when this dossier was written.
 
 | What | Number | Settings | Hardware | Source | Measured by |
 | --- | --- | --- | --- | --- | --- |
+| Static self-play, 1 thread | wolges 319 games/s, MAGPIE 169 | 500 games, CSW24, best static move; MAGPIE with WMP/WIT/RIT/PAT on | i5-9500T, 6 cores, 14 GB | `docs/harness/builds.md:26`, `223-228` | us (build step) |
+| Sim nodes/s (moves played inside rollouts) | wolges 23.3k–33.3k (upper bound), MAGPIE 20.4k–32.0k at 1 thread; at 6 threads wolges 72k–123k, MAGPIE 99k–172k | five positions; wolges uses its own ~110 candidates and 4 plies, MAGPIE 15 candidates and 2 plies | as above | `docs/harness/builds.md:262-286` | us (build step) |
 | Simmer vs hasty | 58.75% for simmer | 20 game pairs, 200 rollouts a move, same leaves | not stated | `lab/simmer.txt:73-75` | wolges author |
 | Blend vs census parent | 50.1162%, 50.0950% | 5M pairs, two seeds, CSW24 | not stated | `lab/leavegen.txt:976-980` | wolges author |
 | Pool-aware vs static leaves | 50.66% | 50k pairs, floor 2 | not stated | `lab/leavegen.txt:946-956` | wolges author |
 | Board sampling vs self-play table | 47.88% for self-play | 1M pairs | not stated | `lab/leavegen.txt:296-300` | wolges author |
 | Census run time | 4x256 about 44 s, 3x256,2048 about 142 s | CSW24 | not stated | commit `4d2ea87d` (2026-07-17) | wolges author |
-| Movegen moves/s, sim rollouts/s, endgame nodes/s | none published | — | — | searched `lab/*.txt`, `details.txt`, PR bodies, commit log | — |
+| Movegen moves/s, sim rollouts/s, endgame nodes/s (wolges' own) | none published | — | — | searched `lab/*.txt`, `details.txt`, PR bodies, commit log | — |
 
-**Comparability.** wolges publishes no movegen or sim throughput. MAGPIE's numbers are sim iterations/s and
-rollout moves/s from PR descriptions, with hardware mostly unstated (`magpie.md` "Measurements"). MAGPIE has
-no movegen-only figure either. So no like-for-like speed comparison exists in either project's docs; the
-BestBot "5 to 10 times faster" claim is MAGPIE vs Macondo, not vs wolges.
+**Comparability.** wolges publishes no movegen or sim throughput. MAGPIE's published figures come from PR
+descriptions, with hardware mostly unstated (`magpie.md` "Measurements"). Our static self-play figure is like
+for like: one thread, same task. The sim figures are not comparable at equal settings yet. The shell's
+`sim N` cannot set candidates or plies, and wolges does not count nodes, so its figure is an upper bound
+(`docs/harness/builds.md:252-264`, `299`). The BestBot "5 to 10 times faster" claim is MAGPIE vs Macondo,
+not vs wolges.
 
 ## History
 
 - 2020-12: first commits (`commits.tsv`). From 2026-03, PR-driven work: game-pair compare (`#27`, 2026-04),
   the leave lab (census, board sampling, blend, 2026-04 to 10), the win% table (`#69`, `#83`), the iteration
-  budget replacing the 8 s timer (`#75` `7461837e`), the endgame and PEG-1 (`#85`–`#101`, 2026-07), soft
-  inference (`#244` `f04cb3df`, 2026-10), endgame-to-the-end rollouts (`#279`), N-in-bag PEG (`#436`–`#453`,
-  2026-11). Two open issues, neither on the engine (`issues.json`: #1 build formats, #33 non-English letters).
+  budget replacing the 8 s timer (`#75` `7461837e`), an adaptive allocator (`#77` `d3b1f92a`, 2026-07),
+  removed with the confidence stop in `#147` (`349588d8`, `4bc69123`, 2026-09; no reason stated), the
+  endgame and PEG-1 (`#85`–`#101`, 2026-07), soft inference (`#244` `f04cb3df`, 2026-10), endgame-to-the-end
+  rollouts (`#279`), N-in-bag PEG (`#436` RandomDraws, `#444` InfoSets, to `#453`, 2026-11). Two open issues, neither on the engine (`issues.json`: #1 build formats, #33 non-English letters).
 
 ## Inference
 
-**Gap table.** Estimates are for us adding the missing part to a wolges fork in Rust, to MAGPIE's level. The
-rule of thumb is that one person-week gives about 300–600 lines of tested engine code. That figure is
-UNVERIFIED, an assumption. Each estimate also budgets the matches needed to show a gain, which on 6 cores is
-often the larger cost.
+**Gap table.** Estimates are for us adding the missing part to a wolges fork in Rust, to MAGPIE's level.
+Every code estimate below converts lines to person-weeks (pw) at **300–600 lines of tested engine code per
+pw**. That rate is UNVERIFIED (an assumption), so every pw figure inherits that uncertainty. Line counts are
+our guesses for Rust, anchored on MAGPIE's file sizes (which include comments, so they overstate). Match
+time is added only where a row says so.
 
-| Part | wolges has | Missing vs MAGPIE | Estimate | Reasoning |
-| --- | --- | --- | --- | --- |
-| Simulation | Full simmer: CRN, paired elimination, deterministic threads, inference, win% table, census steering | Top-two IDS + GLR stopping; bag cycling; best-move carry; spread-sigmoid utility; PAT | 2–4 pw | BAI core is ~1k lines in MAGPIE (`src/impl/bai.h` 2,040 lines incl. comments). Bag cycling and the utility change are ~100–200 lines each. Best-move carry is ~350 lines in MAGPIE (`best_move_carry.h`). Whether top-two beats wolges' successive elimination is unmeasured, so do a match first (~1 pw) before porting. |
-| Endgame | Exact single-thread ID negamax + TT | Parallel search (ABDADA/Lazy SMP); greedy-playout leaf for a capped horizon | 2–4 pw | ABDADA on an existing TT is a few hundred lines, but MAGPIE tried and closed four parallel designs before one stuck (MAGPIE #444–#470), so tuning dominates. The leaf heuristic is ~200 lines. |
-| Pre-endgame | PEG-1 exact; N-in-bag with InfoSets/RandomDraws, threaded, CLI only | Wiring into the bot and autoplay; time-limited staging; fitted bag-term table | 1–3 pw | Wiring is ~200–400 lines (the call exists in `src/main_endgame.rs:1606-1618`). Staging under a clock is ~500 lines. The bag-term table is a fit plus a match. The unknown is speed at 3–4 in the bag, which is measurement, not code. |
-| Rack inference | Soft likelihood, ML-fitted fuzz, in sims | Nothing found; wolges is ahead of merged MAGPIE | 0 pw (+1 pw to measure its value) | MAGPIE's own softmax is still an open PR. |
-| Autoplay / self-play | Seeded mirrored game pairs, per-seat pickers, threads | Endgame/PEG as end picker; clocked games; distributed client | 2–4 pw (no distributed); +2–4 pw for distributed | The end picker is ~300 lines. Clocks plus time allocation are ~500–1,000 lines (MAGPIE `play_chooser.c` 1,429). A fishtest-like client is ~1.8k lines in MAGPIE (`contribute.c`) plus a server we do not have. |
+| Part | wolges has | Missing vs MAGPIE | Lines (guess) | Estimate | Reasoning |
+| --- | --- | --- | --- | --- | --- |
+| Simulation | CRN, paired elimination, deterministic threads, inference, win% table, census steering | Top-two IDS + GLR stop; bag cycling; best-move carry; win%+sigmoid utility | ~1,000 + 150 + 350 + 150 = ~1,650 | 2.75–5.5 pw code + 1 pw match = **~3.7–6.5 pw** | BAI: MAGPIE `src/impl/bai.h` is 2,040 lines incl. comments. Best-move carry: `src/ent/best_move_carry.h` 350. The match comes first because wolges dropped its own adaptive allocator (`#147`), so a gain is not assured. |
+| PAT (positional term) | none | the whole term and its training | MAGPIE's PAT files total ~5,070 lines (`src/*/pat*.{c,h}`, without `path_move_lists`) | **~8.5–17 pw by the rule if similar in size; training pipeline uncosted** | Reimplemented, not ported (GPL). Its strength value on wolges is unmeasured. |
+| Endgame | exact single-thread ID negamax + TT | parallel search; greedy-playout leaf for a capped horizon | 400–800 + 200 = 600–1,000 | **~1–3.3 pw**; tuning uncosted | MAGPIE tried and closed four parallel designs before one stuck (MAGPIE #444–#470). |
+| Pre-endgame | PEG-1; N-in-bag (RandomDraws, InfoSets), threaded, CLI only | wiring into bot and autoplay; time-limited staging; fitted bag-term table | 200–400 + 500 + 100 = 800–1,000 | **~1.3–3.3 pw**; fit and speed tests uncosted | The call already exists in `src/main_endgame.rs:1606-1618`. |
+| Rack inference | soft likelihood, ML-fitted fuzz, in sims | nothing found | 0 | **0 pw code, +1 pw match** to measure its value | Neither engine has measured its inference. |
+| Autoplay / self-play | seeded mirrored game pairs, per-seat pickers, threads | endgame/PEG end picker; clocked games | 300 + 500–1,000 = 800–1,300 | **~1.3–4.3 pw** | MAGPIE `src/impl/play_chooser.c` is 1,429 lines. |
+| Distributed testing | none | client and server | client ~1,800 (MAGPIE `src/impl/contribute.c` 1,783) | **client ~3–6 pw; server uncosted** | We have no server to talk to. |
 
-**Total:** roughly 7–15 person-weeks to reach MAGPIE's feature set on top of wolges, before any neural
-work. About half of that is matches to confirm each change, not code.
+**Total** of the costed rows except PAT and distributed testing: about **8–18 pw**, of which 2 pw are matches
+(sim and inference rows). Adding PAT by the same rule gives about 17–35 pw. All of these figures rest on the
+UNVERIFIED lines-per-week rate.
 
-- The gaps are mostly integration and parallelism, not missing algorithms. wolges already has the hard parts:
-  movegen, exact endgame, exact and N-in-bag PEG, and the leave lab. It is ahead on inference, on endgame
-  exactness, and on the PEG opponent model (InfoSets vs MAGPIE's pessimistic default).
-- wolges values determinism and measured claims (game pairs, stated confidence). That suits our step 5 testing,
-  but it means its defaults are tuned for reproducibility (fixed iteration budgets), not clock play.
-- Speed is the real unknown. MAGPIE's sim numbers include optimisations (best-move carry, bag cycling, BAI)
-  that wolges lacks, so MAGPIE may be faster per decision even if the movegens are close. Only the
-  measurement in `docs/harness/builds.md` can settle this.
+- The gaps are mostly integration and parallelism, not missing algorithms. wolges already has movegen, an
+  exact endgame, PEG-1 and N-in-bag PEG, and the leave lab.
+- Where wolges and MAGPIE differ, the designs are different, and in each case unmeasured:
+  - Endgame: wolges searches to the game's end by default. MAGPIE's CLI defaults to 6 plies, but its
+    PlayChooser asks for unlimited depth (`play_chooser.c:544-549`, via `magpie.md`).
+  - Pre-endgame opponent model: wolges has InfoSets/RandomDraws. MAGPIE has pessimistic by default and a
+    rational option.
+  - Inference: wolges uses a fitted likelihood, a more principled design. MAGPIE accepts leaves within a
+    cutoff and weights them by draw count. Strength is unmeasured for both.
+- wolges values determinism and measured claims (game pairs, stated confidence). That suits our step 5
+  testing, but its defaults are tuned for reproducibility (fixed iteration budgets), not clock play.
+- Speed: our static self-play run has wolges at about 1.9× MAGPIE (319 vs 169 games/s). Inside sims, both
+  play a similar number of moves per second at one thread, and wolges plays fewer at six, but the settings
+  differ (`docs/harness/builds.md:262-286`). Sim speed at equal settings is still open.
 - For a learned evaluator, E4 (sim leaf) is one function in `src/simmer.rs:940-975`, as narrow as MAGPIE's.
   E2/E3 run inside the shadow-bounded generator, so they carry the same bound constraint as MAGPIE.
 
 ## Relevance to the three decisions
 
-**1. What to fork.** If the call is close, wolges should be the fork base:
+**1. What to fork.** If the call is close, wolges is the candidate base:
 - it is MIT;
-- it has a complete engine whose missing parts are about 7–15 person-weeks;
-- it is better than MAGPIE at inference and at exact solving;
-- it is the source of the formats and leave tables everyone uses.
+- it is a complete engine; the missing parts are about 8–18 pw by an UNVERIFIED rate (more with PAT);
+- its static self-play is faster than MAGPIE's on our machine (319 vs 169 games/s);
+- it is the source of the formats everyone uses (KWG, KLV2). Which recipe made MAGPIE's `.klv2` is an open
+  question.
 
 Against it:
-- no published speed numbers;
+- no strength evidence against any outside engine (its only published strength numbers are self-play,
+  wolges against wolges);
+- sim speed at equal settings not yet measured;
 - single-threaded endgame;
 - PEG not wired into play;
+- no PAT-like positional term;
 - one author with a high PR rate, so tracking upstream is costly, as with MAGPIE.
 
-The deciding facts still to get are the speed head-to-head (`docs/harness/builds.md`) and a wolges `bot sim`
-vs MAGPIE match at equal time.
+The deciding facts still to get are a sim-speed comparison at equal settings and a wolges `bot sim` vs
+MAGPIE match at equal time.
 
 **2. Where a neural evaluation pays off.** The same as for MAGPIE: the sim leaf (E4) first. In wolges it is a
 sigmoid or a 3-key table, even simpler than MAGPIE's. The 50.66% from pool-aware leaves is evidence that
@@ -280,8 +307,9 @@ pickers and stated confidence. It lacks clocks, which must be added (see the gap
 
 ## Open questions
 
-- Speed: wolges movegen moves/s and simmer rollouts/s vs MAGPIE on our machine. To be measured in
-  `docs/harness/builds.md`.
+- Sim speed vs MAGPIE at equal settings (candidates, plies). Needs wolges' `simmer` options or a patch
+  (`docs/harness/builds.md:299`).
+- Why did wolges drop its adaptive allocator and confidence stop (`#147`)? The commits give no reason; ask the author.
 - Does MAGPIE's top-two BAI beat wolges' paired successive elimination at equal time? No comparison found.
 - How fast is wolges' N-in-bag PEG (`InfoSets` vs `RandomDraws`) at 2–4 in the bag, and is it fast enough for
   tournament clocks? No numbers published.
