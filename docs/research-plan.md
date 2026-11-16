@@ -99,9 +99,34 @@ licence, how active it is and whether its authors would welcome collaboration.
    Forking wolges (MIT) or writing from scratch leaves the choice open.
 2. **GPU compute.** This machine has no NVIDIA GPU. Training nets at Stockfish scale
    needs rented or owned GPUs.
-3. **Which "missing" engine you meant.** Candidates: Elise and Maven (closed),
-   MAGPIE and wolges (open). "Eclipse" may be Elise.
-4. **Target lexicon / ruleset** for the first matches (e.g. CSW24 or NWL23, TWL rules).
+
+## Decided by the project owner
+
+- **"Eclipse" is Elise** (decided 2026-11-16). Elise (closed, Windows) stays deferred
+  until the open engines are measured; see "Suggested order".
+- **Lexicon: Collins Scrabble Words (CSW)** (decided 2026-11-16), the latest edition the
+  engines support, for all matches and benchmarks. Edition to be confirmed when the
+  engines are built; likely CSW24. Lexicon files and built KWG/DAWG/GADDAG files stay
+  uncommitted under `data/`. The owner did not name a ruleset (challenge rule etc.).
+
+  Editions the reference clones use (pins in `docs/engines/pins.tsv`):
+  - Quackle `35e11bb21a3bf362c533541d0b5fe8ad92a0c08f`: ships `csw24.dawg`
+    (`data/lexica/CMakeLists.txt:5`); `data/lexica/copyrights.txt:10` names "Collins
+    Offical Scrabble™ Wordlist 2024"; regression suite for csw24
+    (`test/regression/suites/csw24-english/suite.json:3`).
+  - Macondo `9c33baa636258ce1a2add1e843f9c8ce1a939436`: Collins value net trained on
+    CSW24 self-play games (`README.md:98`); tests use CSW24 (`wmp/wmp_test.go:13`) and
+    older CSW19/CSW21 (`endgame/negamax/solver_test.go:203`).
+  - MAGPIE `b78101815898641c5f449a7d8b51101b58a2caf0`: `make prepare_data` builds CSW24
+    tables (`AGENTS.md:19`); README examples use `set -lex CSW24` (`README.md:249`); most
+    unit tests use CSW21 (`test/test_constants.h:9`). `download_data.sh:66-68` fetches
+    versioned tarballs and does not name editions.
+  - wolges `be00002981690e22eada4df871da067bd88f7719`: setup uses `CSW24.kwg`
+    (`README.md:44`).
+  - No edition newer than CSW24 appears in these clones (grep for `CSW2[5-9]`/`CSW3x`).
+
+  Inference: CSW24 is the newest edition all four open engines reference, so it is the
+  likely target.
 
 ## Suggested order
 
