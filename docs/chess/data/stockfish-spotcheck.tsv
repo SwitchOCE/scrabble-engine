@@ -1,0 +1,63 @@
+round	sample	sha	date	case	verdict	error found	status
+1	random	b742a3f2	2013-09-27	untested, No functional change	ok		
+1	random	fed3e752	2014-09-22	two unlabelled SPRTs	wrong	TC not identified	fixed (STC/LTC by order, tc_source=order)
+1	random	dc130042	2015-02-15	untested speedup	ok		
+1	random	aa31f7f0	2016-01-03	BayesElo simplification [-3,1]	ok		
+1	random	dbc984d9	2017-08-10	rename, no marker line	wrong	kind other-functional (is a rename)	fixed (subject rule for rename/comment/typo, untested only)
+1	random	82697f11	2018-03-07	simplification	wrong	kind and tag "speedup" from the word "optimism"	fixed
+1	random	8a0af100	2019-05-09	simplification	ok		
+1	random	320fa1b2	2020-08-09	untested, NNUE message	ok		
+1	random	22e92d23	2021-12-21	fixed-games run + SPRTs	ok		
+1	random	9f6bcb38	2022-04-01	nonreg + No functional change	ok		
+1	random	9739ed7a	2023-09-29	simplification	wrong	tag "speedup" from "optimism"	fixed
+1	random	d47aa639	2024-04-21	gainer STC+LTC	ok		
+1	random	b2e60960	2025-12-28	SMP nonreg in code fences	wrong	URL after ``` missed; kind simplification for a bug fix; SMP not flagged	fixed
+1	random	cf559b2c	2026-02-18	speedup mentioning SFNNv12	wrong	kind net-update, area nnue	fixed (SFNNv only as subject topic)
+1	targeted	e95e6951	2013-06-19	no SPRT bounds, "short TC"/"long one"	ok		
+1	targeted	f7c013ed	2013-05-16	60"+0.05 TC	ok		
+1	targeted	bb83a417	2013-10-08	numeric TCs, symmetric [-3,3]	wrong	[-3,3] read as non-regression; LMR tag from "reduce instability"	fixed
+1	targeted	11c6cf72	2021-11-05	gainer with negative elo0 <-0.5,2.5>	ok		
+1	targeted	71e0b538	2020-01-28	logistic {-1,3}	ok		
+1	targeted	16836f39	2020-06-28	logistic {-0.5,1.5}	ok		
+1	targeted	67573218	2025-02-04	VVLTC parameter tweak	wrong	kind not tuning	fixed (param tweak/update in subject)
+1	targeted	3804effb	2019-11-05	SPSA tuning	ok		
+1	targeted	91553218	2023-07-01	SFNNv7, VLTC SMP "60+0.6 th 8"	wrong	threads=6 (read from "0.6 th")	fixed
+1	targeted	f21610e5	2026-08-19	net update, odd LTC block	wrong	one LTC block with two LLR lines mis-labelled; LMR tag from prose	tag fixed; test layout NOT fixed
+1	targeted	319d61ef	2026-05-19	failed VVLTC lines without labels	wrong	TT tag missed "TTEs"	fixed
+1	targeted	00d9e9fd	2015-10-25	fixed-games SMP runs with ELO lines	ok		
+1	targeted	65145002	2019-02-03	PR in subject "(#1987)"	ok		
+1	targeted	5d03b6e5	2026-11-15	net update, other repos' PR links	ok	(draft script gave PR 572 from nnue-pytorch link)	
+1	targeted	84f3e867	2020-08-06	Add NNUE, "sprt @ 60+0.6 th 1"	wrong	threads; kind simplification	fixed
+1	targeted	af110e02	2023-07-11	fixed-games only, "Elo: x ± y"	ok	recomputed Elo equals printed (-2.35)	
+1	targeted	90c83c38	2025-07-28	VVLTC search tune	ok		
+1	targeted	c8ef80f4	2018-03-30	SMP + MultiPV tests	wrong	kind non-functional from qualified marker; elo_stc from a 5-thread MultiPV run	fixed
+2	holdout	af750bd2	2013-09-16	passed STC, failed LTC, fixed games	wrong	result gain	fixed (new result "mixed")
+2	holdout	d3ffd0ff	2014-04-30	gainer	ok		
+2	holdout	20d6a8e5	2015-02-01	No functional change	ok		
+2	holdout	438805ae	2016-09-13	reverse test "master vs patch"	wrong	result tested-not-passed	fixed (reverse tests)
+2	holdout	0868de70	2017-04-23	gainer [0,4]	ok		
+2	holdout	a6fa6a9e	2018-07-14	simplification	ok		
+2	holdout	4d0981fe	2019-03-09	revert, untested	ok		
+2	holdout	23ecf3d5	2020-08-08	html/live_elo.html URL	wrong	URL missed	fixed
+2	holdout	b7f643fe	2021-01-30	.gitignore only	ok		
+2	holdout	7cf93f8b	2022-12-12	simplification	wrong	tag tuning-spsa from "easier tuning"	fixed
+2	holdout	ced03118	2023-06-04	simplification	ok		
+2	holdout	a5675f19	2024-01-17	refactor	ok		
+2	holdout	09faa626	2025-02-27	simplification	ok		
+2	holdout	583e0c1c	2026-04-20	refactor	ok		
+2	holdout	51330414	2015-07-25	three tests incl. [-4,0]	ok		
+2	holdout	baf184e8	2020-01-15	indented LLR lines	ok		
+2	holdout	a55fb76d	2013-07-03	reverse test, no bounds	wrong	result tested-not-passed	fixed (reverse tests)
+2	holdout	8bb5a436	2021-11-27	gainer	ok		
+2	holdout	1b31e266	2025-01-25	nonreg STC/LTC/VLTC	wrong	tag eval-scaling from "bad scaling" (TC sense)	fixed
+2	holdout	9cc15b30	2025-02-13	gainer	wrong	tag eval-scaling from "scale badly"	fixed
+3	final	7cb8817e	2019-06-21	nonreg, No functional change	ok		
+3	final	afaf3a0f	2024-12-08	gainer	ok		
+3	final	3c858c19	2026-06-25	simplification	ok		
+3	final	7a7bcd63	2020-01-23	PR named only as "see .../pull/2460"	wrong	PR missing	fixed (single-mention fallback, pr_source=mention)
+3	final	85bcf474	2020-04-05	logistic gainer	ok		
+3	final	a0e2debe	2021-05-11	SMP nonreg "5+0.05 @ 8 threads"	ok		
+3	final	6e0680ef	2022-04-19	net update with training command	wrong	tags from inside ``` code block	fixed (code blocks stripped before tagging)
+3	final	e6e324eb	2022-04-18	release commit	wrong	kind other-functional	fixed (release kind)
+3	final	bc02cc0c	2013-06-08	typo fix	ok		
+3	final	5769509d	2013-08-09	bug fix, untested	ok		
