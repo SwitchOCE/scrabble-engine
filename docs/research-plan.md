@@ -155,7 +155,13 @@ From the [MAGPIE dossier](engines/magpie.md):
   board and bag, most likely a value net at the playout leaf.
 - **(b) The target will move.** The MAGPIE authors are already testing a GPU value net in rollouts
   (jvc56/MAGPIE#920, branch `vn-nnue-m5`). Our edge has to come from doing it better or faster: a
-  CPU-efficient incremental net, or better training data.
+  CPU-efficient incremental net, or better training data. Update from the pushed branches
+  (`claude/value-net-pat` `ad85baba`): they run Macondo's 3.7M-parameter transformer on Apple GPU/Neural Engine
+  (16 ms per row on an M5 core). As a one-ply player it scores 56.83% ± 0.90 against static. Inside the sim the
+  only test of the transformer, at equal iterations, was flat (50.67% ± 1.85%), and the net leaf was never
+  played. Two uses are open: a µs-scale CPU leaf net, and a cheap net as sim candidate selector or prior, which
+  has the strongest measured signal (1-ply picker +6.8 over static) and was built but never played in a sim.
+  Both must be proven at equal time in game pairs.
 
 Contacting the MAGPIE authors is the owner's call; nothing has been sent.
 
