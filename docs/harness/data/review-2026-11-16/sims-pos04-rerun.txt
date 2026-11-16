@@ -1,0 +1,26 @@
+### macondo pos-04.gcg threads=1 plies=2 cands=15 secs=10
+2026-11-16T21:54:41+11:00 | INFO  | time taken: 9.778620246, nps: 32820.581220, nodes: 320940
+2026-11-16T21:54:41+11:00 | INFO  | sim-ended iterationCt:7132 plies:2
+### magpie pos-04.gcg threads=1 plies=2 cands=15 secs=10
+Iters: 118525 
+Time: 10.00 seconds 
+Infer: 0 
+Census: off 
+Status: Finished (time limit exceeded)
+Nps: 35556 
+### wolges pos-04.gcg threads=1 plies=4 cands=wolges-field iterations=500
+sim: 500 more iterations, 6114 ms
+candidates_listed=110 rollouts_total=39472
+### macondo pos-04.gcg threads=6 plies=2 cands=15 secs=10
+2026-11-16T21:55:10+11:00 | INFO  | time taken: 9.806343679, nps: 159518.170197, nodes: 1564290
+2026-11-16T21:55:10+11:00 | INFO  | sim-ended iterationCt:34762 plies:2
+### magpie pos-04.gcg threads=6 plies=2 cands=15 secs=10
+Iters: 573276 
+Time: 10.00 seconds 
+Infer: 0 
+Census: off 
+Status: Finished (time limit exceeded)
+Nps: 171990 
+### wolges pos-04.gcg threads=6 plies=4 cands=wolges-field iterations=3000
+sim: 3000 more iterations, 2561 ms
+candidates_listed=110 rollouts_total=65264

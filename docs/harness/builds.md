@@ -20,13 +20,19 @@ otherwise idle except for an unrelated download; one benchmark ran at a time.
 
 ### Speed in brief (details and caveats under Speed)
 
+All figures are from one run per cell on a machine that was not fully idle (see the
+open question on re-running them). Figures marked † were re-measured by scope review, 2026-11-16.
+
 | Measure (CSW24, this machine) | Quackle | Macondo | MAGPIE | wolges |
 | --- | --- | --- | --- | --- |
-| Best static move, 5 fixed positions, µs per call (1 thread), range | 975–14,059 | 171–6,420 | not measurable (~70 ms per command) | 292–311 |
-| Static self-play, games/s (1 thread) | 3.8 | 111 | 169 | 319 |
-| Sim, 2-ply rollouts/s, 15 candidates, 1 thread | not drivable headless | 5,851–10,934 | 6,817–10,682 | (4-ply, own field) 4,664–6,665 |
-| Same, 6 threads | – | 28,685–47,653 | 33,145–57,189 | (4-ply) 14,467–24,597 |
-| Sim moves played/s, 1 thread | – | 17.6k–32.8k | 20.4k–32.0k | ≤23.3k–33.3k |
+| Best static move, 5 fixed positions, µs per call (1 thread), range | 975–14,059 | 171–6,420 | not measurable (~70 ms per command) | ~12 (pos-04) and ~19 (pos-14) per extra call, after a ~0.27 s first call † |
+| Static self-play, games/s (1 thread) | 3.8 | 111 | ~328 † | 319 |
+| Sim, 2-ply rollouts/s, 15 candidates, 1 thread | not drivable headless | 5,851–10,934 | 6,817–10,682 (libmagpie.so, gcc, no PGO); 13,510 on pos-04 with the PGO `bin/magpie` † | (4-ply, own field) 4,664–6,665 |
+| Same, 6 threads | – | 28,685–47,653 | 33,145–57,189 (libmagpie.so) | (4-ply) 14,467–24,597 |
+| Sim moves played/s, 1 thread | – | 17.6k–32.8k | 20.4k–32.0k (libmagpie.so) | ≤23.3k–33.3k |
+
+At static self-play MAGPIE and wolges are about level (~328 against 319 games/s),
+both about 3× Macondo.
 
 Clone HEADs were checked against `reference/PINS.tsv` by reading each clone's
 `refs/heads/*` file (the worktree sandbox blocks `git` aimed at `reference/`).
@@ -89,8 +95,14 @@ No source in any clone was edited, and no branch was made.
 
 ## Data
 
-`scripts/fetch-engine-data.sh` fetches everything below into `data/` and writes
-`data/MANIFEST.tsv` (URL, size, sha256 for each download). The table lists the sha256 of
+`scripts/fetch-engine-data.sh` fetches or copies the data into `data/`, checks every
+file in the table below against its sha256 (exit 1 on a mismatch or a missing required
+file) and rewrites `data/MANIFEST.tsv` from scratch (one row per file: path, sha256,
+size, source). It downloads the MAGPIE-DATA tarballs, copies the liwords files for
+Macondo and wolges, makes the Quackle overlay and builds `csw24.gaddag` if the Quackle
+binaries are built. **It does not build** MAGPIE's `CSW24.wmp`, `.wit` or `.rit` (the
+MAGPIE build steps above do) or Macondo's `CSW24.wmp` (Macondo builds it on first use);
+it checks them if they are there. The table lists the sha256 of
 every data file each engine actually loads in the runs below (checked after the runs).
 
 | Engine | File (under the engine's data dir) | sha256 | Source |
@@ -122,9 +134,13 @@ MAGPIE-DATA tarball: `https://github.com/jvc56/MAGPIE-DATA/raw/main/versioned-ta
 (versions read from magpie@b781018 `download_data.sh`), reassembled sha256
 `625e253bbbbbc7488aea2a8c581b67f7698b0a21c140dac513ae1c0e0abde0b4` (192,232,563 bytes);
 `testdata-20260101.tgz` sha256 `fde407febee789df23711bd203272fc4e23b3daf715ff13f376b1150a4cdf045`.
-Per-chunk sums are in `data/MANIFEST.tsv`. The orchestrator reports that this tarball
-was rebuilt in place on 2 Nov (jvc56/MAGPIE#982) and CSW24.klv2 changed from
-`b0ef5f66…` to `1937df3f…`, so a version name alone does not pin MAGPIE's data.
+The five chunks (`.aa`–`.ae`) are deleted once reassembled; the script checks the
+reassembled tarball's sha256. The tarball was rebuilt in place: jvc56/MAGPIE#982
+(issue, closed 2026-11-13) says "jvc56/MAGPIE-DATA#18 (Nov 2) rebuilt the
+`data-20260925` tarball in place with the census-blended leaves", and that its
+`CSW24.klv2` is now `1937df3f…` where jobs pin the original `b0ef5f66…`
+(`reference/history/magpie/issues.json`). So a version name alone does not pin MAGPIE's
+data.
 
 liwords files: the pinned liwords clone (`ceccdb6`) and the live `refs/heads/master` URL
 Macondo downloads from served identical bytes on 2026-11-16 (both recorded in the
@@ -140,7 +156,7 @@ dumps to 280,887 words whose list is byte-identical to MAGPIE's `dawg2text CSW24
 **Leaves differ by engine (each engine's own CSW24 leaves, as shipped):**
 
 - Macondo and wolges: liwords `CSW24.klv2` (`b0ef5f66…`), which is the *old* MAGPIE-DATA CSW24 leaves.
-- MAGPIE: the rebuilt `CSW24.klv2` (`1937df3f…`), plus PAT weights `CSW24.pat` (on by default since jvc56/MAGPIE#987, per the orchestrator) and `CSW24_pegadjust.csv`.
+- MAGPIE: the rebuilt `CSW24.klv2` (`1937df3f…`), plus PAT weights `CSW24.pat` (on by default since jvc56/MAGPIE#987, "PAT weights on by default: a lexicon brings its own", merged 2026-11-14, `reference/history/magpie/prs-index.tsv`) and `CSW24_pegadjust.csv`.
 - Quackle: `strategy/csw/superleaves`, a different format. It is the only Collins leave file Quackle ships, so we use it; **it is not CSW24-specific (flagged)**. History: quackle `1462523` (2014-11-30, "Fix Collins superleaves") and `e29118f` (2019-07-21), whose message says "There's only two distinct superleaves files … the Collins superleaves is in strategy/csw" (`reference/history/quackle/commits-full.txt:1146-1158`).
 
   Inference: the file predates CSW15, CSW19 and CSW24 and was fitted on an older Collins edition (which one is UNVERIFIED). Quackle plays CSW24 words with older Collins leaves.
@@ -194,22 +210,40 @@ Scripts: `harness/bench/movegen.sh`, `harness/bench/selfplay.sh`, `harness/bench
 Command: `harness/bench/movegen.sh 1000`, three passes. For each position: load once,
 then ask for the best static move 1000 times through the engine's own command loop;
 time = (wall time of that run − wall time of a run with 0 repetitions) / 1000. Median
-of 3 passes, µs per call (raw: `data/movegen-console.tsv`).
+of 3 passes, µs per call (raw: `data/movegen-console.tsv`). The script now uses an R=1
+baseline and divides by R−1 (see the wolges note below); the Quackle and Macondo
+figures were measured with R=0, which the review's Macondo check suggests changes
+little for them.
 
-| Position (rack) | Quackle | Macondo | wolges | MAGPIE |
+| Position (rack) | Quackle | Macondo | wolges, marginal † | MAGPIE |
 | --- | --- | --- | --- | --- |
-| pos-04 (HERDOOO) | 975 | 216 | 292 | not measured |
-| pos-07 (AELSTIV) | 2473 | 938 | 311 | not measured |
-| pos-10 (FCSMMIO) | 1930 | 577 | 307 | not measured |
-| pos-14 (?ALNORU, a blank) | 14059 | 6420 | 304 | not measured |
-| pos-16 (RWKIGIQ) | 1918 | 171 | 309 | not measured |
+| pos-04 (HERDOOO) | 975 | 216 | ~12 | not measured |
+| pos-07 (AELSTIV) | 2473 | 938 | not re-measured | not measured |
+| pos-10 (FCSMMIO) | 1930 | 577 | not re-measured | not measured |
+| pos-14 (?ALNORU, a blank) | 14059 | 6420 | ~19 | not measured |
+| pos-16 (RWKIGIQ) | 1918 | 171 | not re-measured | not measured |
+
+† wolges column re-measured by scope review, 2026-11-16. The first `gen` in a wolges shell costs ~0.27 s (a run
+with 0 calls takes 0.01 s, with 1 call 0.31 s, with 10 calls 0.31 s, with 1000 calls
+0.32 s, with 5000 calls 0.43 s, all on pos-14). Our R=0 baseline therefore left that
+one-off cost in, and the ~300 µs we first reported was mostly 0.27 s / 1000. The column
+is now the marginal cost against an R=1 baseline: R=20000 took 0.54 s on pos-04 and
+0.68 s on pos-14, so (0.54 − 0.31) / 19999 ≈ 12 µs and (0.68 − 0.31) / 19999 ≈ 19 µs
+(raw: `data/review-2026-11-16/rerun-tails.txt`). The same check on Macondo found no
+such first-call cost (R=0 0.23 s, R=1 0.22 s, R=3000 0.97 s on pos-04: ~250 µs per call,
+close to the 216 µs above).
 
 What each call does:
 
 - **Quackle:** `--mode=positions` with the position listed 1001 times, so each repetition also re-reads the GCG and prints the board and top 10 (to `/dev/null`). Speedy Player generates every move and ranks it by static equity. An upper bound on its movegen time.
 - **Macondo:** `gen 1`: all moves, ranked by equity (leaves), top 1 printed.
-- **wolges:** `gen 1`: `gen_moves_unfiltered` with `max_gen: 1` (wolges@be00002 `src/shell_session.rs:1923-1945`). Asking for one move lets wolges cut generation short, so this is "find the best move", not "list every move". The flat ~300 µs, blank or not, suggests the shell's own per-command cost dominates (`help` costs ~50 µs per call); wolges' true movegen time is at most this.
-- **MAGPIE:** every console or C-API command costs ~70 ms of CPU, even `shmoves 1` (41 `generate` calls: 3.0 s user CPU; `generate` and `shmoves 1` both ~73 ms via the C API, with a GCG or a CGP position). That swamps movegen, so no per-position MAGPIE number is reported. Its self-play speed is below.
+- **wolges:** `gen 1`: `gen_moves_unfiltered` with `max_gen: 1` (wolges@be00002 `src/shell_session.rs:1923-1945`). Asking for one move lets wolges cut generation short, so this is "find the best move", not "list every move". Each shell command also has its own cost: 200 `help` commands added 10 ms (~50 µs each; `data/command-cost-probes.txt`, wolges section), so part of the marginal figure is the shell, not movegen.
+- **MAGPIE:** every console or C-API command costs ~70 ms of CPU, even `shmoves 1`. Evidence, with the scripts and their output, in `data/command-cost-probes.txt`:
+  - console, pos-14: 1 command 0.52–0.54 s, 41 commands 3.27–3.38 s, for `generate` with or without `-wmp false`, `-numplays 1`, `-pfreq 0`, `-mode sync`, and for `shmoves 1`;
+  - 41 `generate` calls: real 3.55 s, user 2.98 s, sys 0.57 s;
+  - C API, empty-board CGP: `generate` 75.3 ms and `shmoves 1` 73.4 ms per call (20 calls each).
+
+  That swamps movegen, so no per-position MAGPIE number is reported (`harness/bench/magpie_api.py gen`, which subtracts the `shmoves 1` cost, gives noise). Its self-play speed is below.
 
 Not directly comparable: the engines differ in what "best static move" includes (MAGPIE
 adds PAT; Quackle's harness reloads the position).
@@ -224,7 +258,7 @@ engine's static player against itself, wall time including start-up (raw:
 | --- | --- | --- | --- | --- |
 | Quackle | Speedy Player, `--seed=1` | 100 | 26.04 | 3.8 (2272 moves: 87 moves/s) |
 | Macondo | `HASTY_BOT` ×2, `-threads 1 -seed 1` | 500 | 4.49 | 111 |
-| MAGPIE | `-s1/-s2 equity -r1/-r2 best -numplays 1 -threads 1 -seed 1`; word map, WIT, RIT and PAT on (defaults) | 500 | 2.95 | 169 |
+| MAGPIE † | `-s1/-s2 equity -r1/-r2 best -numplays 1 -threads 1 -seed 1`; word map, WIT, RIT and PAT on (defaults) | 500 | 1.53 (three runs) | ~328 (2000 games: 5.16 s, ~388) |
 | wolges | `auto --games 500` (its own timer: 1.13 s) | 500 | 1.57 | 319 (442 by its own timer) |
 
 Facts:
@@ -233,6 +267,10 @@ Facts:
 - Per move, Quackle is ~10× slower in self-play than in table 1 (11.5 ms per move against 1–2 ms per position, outside the blank position).
 - Quackle's `--quiet` skips the games: `haveComputerPlay()` is inside `if (!m_quiet)` (quackle@35e11bb `test/testharness.cpp:771-798`), so 500 "games" took 0.4 s (that run is the Quackle block in `data/selfplay-static.txt`; the real one is `data/selfplay-static-quackle.txt`). The script now reads the move log instead.
 - The games are not the same games across engines.
+- † MAGPIE row re-measured by scope review, 2026-11-16 (same command; numbers from the review's report, raw output not saved). Our own run took 2.95 s (169 games/s, in `data/selfplay-static.txt`) and did not reproduce.
+
+Inference: our slow MAGPIE run was probably a cold page cache for the 1.9 GB
+`CSW24.rit` (it had just been built) or contention with the background download.
 
 Inference: `EndgamePlayer` probably searches the endgame instead of playing it
 statically, which would explain the slower moves (UNVERIFIED: its endgame code was not
@@ -264,7 +302,7 @@ Macondo against MAGPIE, and **nodes/s** (moves played inside the sim, roughly on
 movegen each) for all three. wolges rollouts are 4-ply, so its rollouts/s is not
 comparable with the 2-ply engines.
 
-| Position | Threads | Macondo rollouts/s | MAGPIE rollouts/s | wolges rollouts/s | Macondo nodes/s | MAGPIE nodes/s | wolges nodes/s (≤) |
+| Position | Threads | Macondo rollouts/s | MAGPIE rollouts/s (libmagpie.so, gcc, no PGO) | wolges rollouts/s | Macondo nodes/s | MAGPIE nodes/s (libmagpie.so) | wolges nodes/s (≤) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | pos-04 | 1 | 10,934 | 10,682 | 6,665 | 32,802 | 32,044 | 33,324 |
 | pos-04 | 6 | 47,653 | 57,189 | 24,597 | 142,959 | 171,529 | 122,985 |
@@ -277,20 +315,33 @@ comparable with the 2-ply engines.
 | pos-16 | 1 | 6,973 | 7,837 | 4,664 | 20,919 | 23,509 | 23,322 |
 | pos-16 | 6 | 34,363 | 38,508 | 20,658 | 103,088 | 115,554 | 103,289 |
 
-Speed-up from 1 to 6 threads (rollouts/s): Macondo 4.4–4.9×, MAGPIE 4.9–5.4×,
+Speed-up from 1 to 6 threads (rollouts/s, single runs): Macondo 4.4–4.9×, MAGPIE 4.9–5.4×,
 wolges 2.9–4.4× (its 6-thread runs lasted only 1.4–2.2 s, so its figure includes more
 start-up per rollout).
 
-Facts: at one thread, Macondo and MAGPIE do about the same number of 2-ply rollouts
-per second at these settings (within 18% of each other; Macondo is ahead on two positions, MAGPIE on three). At six threads MAGPIE
-is ahead on four of five positions (by 6–20%). wolges plays about as many moves per
-second inside its sim as the other two at one thread, and fewer at six.
+The MAGPIE columns come from `libmagpie.so`, built with gcc and no PGO, because the
+sims run through the C API. The PGO console binary `bin/magpie`, same settings, pos-04,
+1 thread: **13,510 rollouts/s** (re-measured by scope review, 2026-11-16; input
+`w2/mpsim` in the review's scratch, output not saved), against 10,682 for the library here.
+
+Noise: each cell is one run. The review re-ran pos-04
+(`data/review-2026-11-16/sims-pos04-rerun.txt`): Macondo 7,132 iterations against
+7,130 at 1 thread and 34,762 against 31,181 at 6; MAGPIE 118,525 rollouts against
+106,821 at 1 thread and 573,276 against 571,890 at 6. Differences of ~10% between cells
+are within run-to-run noise, so the table does not rank Macondo against MAGPIE.
+
+Facts: at one thread, Macondo and the no-PGO MAGPIE library do a similar number of 2-ply
+rollouts per second at these settings; the PGO MAGPIE binary is faster on the one
+position measured. wolges plays about as many moves per second inside its sim as the
+other two at one thread, and fewer at six.
 
 Inference: raw sim speed is similar enough that strength will be decided by what each
 engine does with its rollouts (candidate choice, pruning, inference, leaves, PAT,
 endgame handling), not by speed alone.
 
 ## Open questions
+
+- **Re-run all speed tables, median of 3, on an idle machine.** Every figure here is one run (table 1: three passes) on a machine with a background download, and later scope-review matches, running. The review's re-runs differ from ours by up to ~10% (sims) and ~2× (MAGPIE self-play).
 
 - **MAGPIE's ~70 ms per command.** Every console or C-API command costs ~70 ms of CPU (14 ms of it system time), with a GCG or CGP position, sync mode or not. Why? Until it is known, a per-move MAGPIE adapter pays 70 ms per command, and per-position movegen cannot be timed through the API.
 - **Quackle superleaves:** which Collins edition was `strategy/csw/superleaves` fitted on (it dates from 2014 or earlier)? Would fresh CSW24 superleaves (Quackle ships `encodeleaves`) change its strength?

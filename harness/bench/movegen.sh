@@ -4,7 +4,8 @@
 # For each engine and position: load the position once, then generate the full
 # move list and rank it by static equity R times through the engine's own
 # command loop (only the top move is printed). Wall time of an R-run minus an
-# R=0 run (startup + load) divided by R is the time per generation.
+# R=1 run, divided by R-1, is the marginal time per generation. (An R=0 baseline
+# is wrong for wolges: its first `gen` costs ~0.27 s, found by the scope review.)
 # Quackle's harness cannot repeat gen without reloading, so for Quackle each
 # repetition also re-reads the GCG and prints the board (flagged in builds.md).
 #
@@ -52,12 +53,12 @@ mk() { # engine pos reps -> file
 printf 'engine\tposition\treps\ts_total\ts_base\tus_per_gen\tgens_per_s\n'
 for e in ${ENGINES:-quackle macondo wolges}; do
   for p in "$POS"/pos-*.gcg; do
-    base=$(timeit run_$e "$(mk $e "$p" 0)")
+    base=$(timeit run_$e "$(mk $e "$p" 1)")
     tot=$(timeit run_$e "$(mk $e "$p" "$R")")
     python3 -I -c "
 import sys
 e,p,r,t,b=sys.argv[1],sys.argv[2],int(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5])
-us=(t-b)/r*1e6
+us=(t-b)/(r-1)*1e6
 print(f'{e}\t{p}\t{r}\t{t:.3f}\t{b:.3f}\t{us:.1f}\t{1e6/us:.0f}')" "$e" "$(basename "$p")" "$R" "$tot" "$base"
   done
 done

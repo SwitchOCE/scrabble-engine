@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Time MAGPIE commands in-process through libmagpie's C API (ctypes).
 
-MAGPIE's console spends ~70 ms per command on its own loop (measured: even
-`shmoves` costs that when piped), so per-generation timing has to go through
-the library. Our own code: it only calls the public magpie_* functions.
+Every MAGPIE command, console or this library, costs ~70 ms of CPU (even
+`shmoves 1`). So the `gen` mode below, which subtracts the cost of `shmoves 1`
+from the cost of `generate`, is noise: movegen is far smaller than the jitter
+in 70 ms. It is kept only to show that. The `run` mode is what the sim
+benchmark uses (a 10 s sim dwarfs 70 ms). Our own code: it only calls the
+public magpie_* functions.
 
 Usage:
-  magpie_api.py gen  POS.gcg REPS            -> time REPS x `generate`
+  magpie_api.py gen  POS.gcg REPS            -> (noise) REPS x `generate` minus REPS x `shmoves 1`
   magpie_api.py run  POS.gcg 'CMD' ['CMD'..] -> run commands once each, timed,
                                                 printing their output
 Env: MAGPIE_DIR (default reference/magpie), needs bin/libmagpie.so there.
