@@ -1,0 +1,18 @@
+# Scope review re-runs, 2026-11-16. Last line of each run, copied from the reviewer's
+# scratch files (command file: position loaded, number of `gen 1` lines | timing line).
+# wolges shell, pos-14, `gen 1` repeated r times (wall time of the whole run):
+tmp.972QYD2VF5: pos-14.gcg gen-lines=0 | r=0 0.01 s
+tmp.wnFxvACp1h: pos-14.gcg gen-lines=1 | r=1 0.31 s
+tmp.gNst04ffVL: pos-14.gcg gen-lines=10 | r=10 0.31 s
+tmp.sfAgWFuYAN: pos-14.gcg gen-lines=1000 | r=1000 0.32 s
+tmp.NkiAsARsbJ: pos-14.gcg gen-lines=5000 | r=5000 0.43 s
+# Macondo shell, pos-04, `gen 1` repeated r times:
+w2/mac-0: pos-04.gcg gen=0 | macondo r=0 0.23 s
+w2/mac-1: pos-04.gcg gen=1 | macondo r=1 0.22 s
+w2/mac-3000: pos-04.gcg gen=3000 | macondo r=3000 0.97 s
+#
+# Reported by the scope review in its message; raw output not saved where we could copy it:
+# wolges `gen 1` r=20000: pos-04 0.54 s, pos-14 0.68 s (inputs w2/in-04-20000, w2/in-14-20000)
+# MAGPIE `harness/bench/selfplay.sh` command, 500 games: 1.53 s, three times; 2000 games: 5.16 s
+# MAGPIE bin/magpie (PGO) console sim, pos-04, 1 thread, settings as sims.sh (input w2/mpsim):
+#   13,510 rollouts/s

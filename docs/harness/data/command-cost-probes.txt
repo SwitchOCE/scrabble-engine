@@ -1,0 +1,87 @@
+# Probes behind the per-command cost claims in builds.md (run 2026-11-16, 21:30-21:45).
+# Each section: the script as run, then its output as recorded in the session.
+# mgtest.sh is shown in its final form; the first output block was produced before
+# '-mode sync' and the CMD variable were added (same commands otherwise).
+
+## MAGPIE console, pos-14: 1 vs 41 commands per option (mgtest.sh)
+#!/usr/bin/env bash
+cd /home/alex/code/scrabble-engine/reference/magpie
+P=/home/alex/code/scrabble-engine/.claude/worktrees/agent-ab55d5660fd00f0c4/harness/bench/positions
+f=/tmp/claude-1000/-home-alex-code-scrabble-engine/8d82339f-c9ef-42ef-ae57-a5cc805a8185/scratchpad/mg.txt
+for opt in "" "-wmp false" "-numplays 1" "-pfreq 0"; do
+  for n in 1 41; do
+    { echo "set -mode sync -lex CSW24 -threads 1 -savesettings false $opt"; echo "load $P/pos-14.gcg"; echo "goto end"; for ((i=0;i<n;i++)); do echo ${CMD:-gen}; done; } > $f
+    s=$(date +%s%N); ./bin/magpie < $f > /dev/null 2>&1; e=$(date +%s%N)
+    echo "opt=[$opt] n=$n ms=$(( (e-s)/1000000 ))"
+  done
+done
+
+--- output, CMD=generate (before -mode sync):
+opt=[] n=1 ms=535
+opt=[] n=41 ms=3363
+opt=[-wmp false] n=1 ms=426
+opt=[-wmp false] n=41 ms=3272
+opt=[-numplays 1] n=1 ms=531
+opt=[-numplays 1] n=41 ms=3331
+opt=[-pfreq 0] n=1 ms=536
+opt=[-pfreq 0] n=41 ms=3384
+--- output, -mode sync, CMD=generate:
+opt=[] n=1 ms=524
+opt=[] n=41 ms=3377
+--- output, -mode sync, CMD=shmoves:
+opt=[] n=1 ms=522
+opt=[] n=41 ms=3310
+
+## MAGPIE console, 41 x generate, CPU time (mg41.sh)
+#!/usr/bin/env bash
+cd /home/alex/code/scrabble-engine/reference/magpie
+F=/tmp/claude-1000/-home-alex-code-scrabble-engine/8d82339f-c9ef-42ef-ae57-a5cc805a8185/scratchpad/mg41.txt
+P=/home/alex/code/scrabble-engine/.claude/worktrees/agent-ab55d5660fd00f0c4/harness/bench/positions
+N=${N:-41}
+{ echo "set -mode sync -lex CSW24 -threads 1 -savesettings false -autosavegcg false"; echo "load $P/pos-14.gcg"; echo "goto end"; for ((i=0;i<N;i++)); do echo ${CMD:-generate}; done; } > $F
+time ./bin/magpie < $F > /dev/null 2>&1
+
+--- output:
+real 0m3.547s
+user 0m2.980s
+sys 0m0.565s
+
+## MAGPIE C API, empty-board CGP, 20 x each command (cgptest.py)
+import sys, time
+sys.path.insert(0, "/home/alex/code/scrabble-engine/.claude/worktrees/agent-ab55d5660fd00f0c4/harness/bench")
+import magpie_api as m
+lib, mp = m.open_magpie()
+m.run(lib, mp, "set -lex CSW24 -threads 1 -savesettings false -autosavegcg false")
+m.run(lib, mp, "cgp 15/15/15/15/15/15/15/15/15/15/15/15/15/15/15 AQRTUYZ/ 0/0 0")
+for cmd in ["generate", "shmoves 1"]:
+    t0 = time.perf_counter()
+    for _ in range(20):
+        m.run(lib, mp, cmd)
+    print(cmd, (time.perf_counter() - t0) / 20 * 1e3, "ms")
+for c in ["export /tmp/claude-1000/-home-alex-code-scrabble-engine/8d82339f-c9ef-42ef-ae57-a5cc805a8185/scratchpad/x.gcg"]:
+    pass
+
+--- output:
+generate 75.27680065250024 ms
+shmoves 1 73.43603735789657 ms
+
+## wolges shell, pos-14: 0 vs 200 commands (wtest.sh)
+#!/usr/bin/env bash
+cd /home/alex/code/scrabble-engine/data/wolges
+P=/home/alex/code/scrabble-engine/.claude/worktrees/agent-ab55d5660fd00f0c4/harness/bench/positions
+f=/tmp/claude-1000/-home-alex-code-scrabble-engine/8d82339f-c9ef-42ef-ae57-a5cc805a8185/scratchpad/w.txt
+for cmd in "gen 1" "help" "sim 1"; do
+  for n in 0 200; do
+    { echo "lexicon CSW24.kwg"; echo "leaves CSW24.klv2"; echo "gcg load $P/pos-14.gcg"; for ((i=0;i<n;i++)); do echo "$cmd"; done; echo exit; } > $f
+    s=$(date +%s%N); /home/alex/code/scrabble-engine/reference/wolges/target/release/shell < $f > /dev/null 2>&1; e=$(date +%s%N)
+    echo "cmd=[$cmd] n=$n ms=$(( (e-s)/1000000 ))"
+  done
+done
+
+--- output:
+cmd=[gen 1] n=0 ms=21
+cmd=[gen 1] n=200 ms=301
+cmd=[help] n=0 ms=21
+cmd=[help] n=200 ms=31
+cmd=[sim 1] n=0 ms=20
+cmd=[sim 1] n=200 ms=6359
