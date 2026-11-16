@@ -1,0 +1,4 @@
+### quackle
+$ (cd /home/alex/code/scrabble-engine/data/quackle/run && sh -c '/home/alex/code/scrabble-engine/reference/quackle/build-headless/test/libquackle_test'                --mode=selfplay --lexicon=csw24 '--computer=Speedy Player' --seed=1 --repetitions=100 > /tmp/tmp.SrqtMv830z;                echo games=$(grep -c 'GAME OVER' /tmp/tmp.SrqtMv830z) moves=$(grep -c commits /tmp/tmp.SrqtMv830z))
+games=100 moves=2272
+wall_s=26155e-3 games=100

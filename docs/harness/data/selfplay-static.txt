@@ -1,0 +1,61 @@
+### quackle
+$ (cd /home/alex/code/scrabble-engine/data/quackle/run && /home/alex/code/scrabble-engine/reference/quackle/build-headless/test/libquackle_test --mode=selfplay --lexicon=csw24 --computer=Speedy Player --seed=1 --repetitions=500 --quiet)
+NEW GAME (#488)
+NEW GAME (#489)
+NEW GAME (#490)
+NEW GAME (#491)
+NEW GAME (#492)
+NEW GAME (#493)
+NEW GAME (#494)
+NEW GAME (#495)
+NEW GAME (#496)
+NEW GAME (#497)
+NEW GAME (#498)
+NEW GAME (#499)
+wall_s=375e-3 games=500
+### macondo
+$ (cd /home/alex/code/scrabble-engine/data/macondo && env MACONDO_DATA_PATH=/home/alex/code/scrabble-engine/data/macondo /home/alex/code/scrabble-engine/reference/macondo/bin/shell autoplay -lexicon CSW24 -botcode1 HASTY_BOT -botcode2 HASTY_BOT -numgames 500 -threads 1 -seed 1 -outputdir /tmp/tmp.sLiqSDBHfu -block)
+[90m2026-11-16T21:40:31+11:00[0m | INFO  | botcode HASTY_BOT
+[90m2026-11-16T21:40:31+11:00[0m | INFO  | botcode HASTY_BOT
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | Finished queueing all jobs. jobsQueued:500
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | exiting-gameplay-thread-1
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | All games finished.
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | Exiting feeder subroutine!
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | Exiting turn logger goroutine!
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | Exiting game logger goroutine!
+Experiment "20261116-214031-cf3e92" started. Output: /tmp/tmp.sLiqSDBHfu/20261116-214031-cf3e92.txt
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | started loop
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | got quit signal...
+[90m2026-11-16T21:40:36+11:00[0m | INFO  | server gracefully shutting down
+wall_s=4493e-3 games=500
+games_file_lines=501
+### magpie
+$ (cd /home/alex/code/scrabble-engine/reference/magpie && ./bin/magpie autoplay games 500 -lex CSW24 -threads 1 -seed 1 -s1 equity -s2 equity -r1 best -r2 best -numplays 1 -gp false -savesettings false -hr true)
+Ties:                    3 (0.60%)                3 (0.60%)                
+Score:                   458.27 59.11             455.01 59.51             
+
+Player 1 is better with confidence: 91.014375%
+Opener's final spread less opening static equity, by tiles played on the opening move:
+  2 tiles: mean -10.474, SE 21.133 (24 games, 5.6%)
+  3 tiles: mean -20.391, SE 10.832 (68 games, 16.0%)
+  4 tiles: mean -11.099, SE 12.289 (48 games, 11.3%)
+  5 tiles: mean -26.144, SE 8.770 (157 games, 36.9%)
+  6 tiles: mean -43.354, SE 10.929 (50 games, 11.7%)
+  7 tiles: mean -4.862, SE 8.887 (79 games, 18.5%)
+
+wall_s=2953e-3 games=500
+### wolges
+$ (cd /home/alex/code/scrabble-engine/data/wolges && /home/alex/code/scrabble-engine/reference/wolges/target/release/auto --games 500 CSW24.kwg CSW24.klv2)
+12|' T E - T     ' Z     -     T|12
+13|    D       '   E       -   O|13
+14|  -       "     n "       - N|14
+15|=     '       =     I D L E S|15
+  +-----------------------------+
+   A B C D E F G H I J K L M N O
+R1U4QI2HOWL/ACRAWL2CROOVE1/T1DUH2BY3E2/A2tI2R4R2/N2OP1FINALISM1/Y2S3E1XI1U2/3AB2F4P2/3VAGUED5G/2MENO1RE5I/1JA1KO1SNOTTING/1EA1E3I5A/1TE1T3Z5T/2D5E5O/8n5N/10IDLES
+Pool 0: 
+Player 1:  381          00:15.000 (turn)
+Player 2:  528 E        00:15.000
+Final scores: [383, 528]
+Stats: [383, 528] n=500 (282-218-0) p0=465.174 (sd=63.028) p1=449.490 (sd=60.386) p0-p1=15.684 (sd=102.485) p0w=56.400 (sd=49.638) after 1.13175933s
+wall_s=1565e-3 games=500
