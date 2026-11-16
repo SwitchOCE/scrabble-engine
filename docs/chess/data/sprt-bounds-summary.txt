@@ -1,0 +1,83 @@
+model tc nonreg elo0 elo1 count first last
+normalized STC True -1.75 0.25 584 2022-08-12 2026-11-14
+normalized STC False 0.0 2.0 462 2022-08-06 2026-11-15
+normalized LTC True -1.75 0.25 454 2022-08-12 2026-10-25
+BayesElo STC True -3.0 1.0 378 2014-02-26 2020-01-23
+normalized LTC False 0.5 2.5 354 2022-08-06 2026-11-15
+BayesElo LTC True -3.0 1.0 313 2014-02-26 2020-01-09
+BayesElo STC False 0.0 5.0 137 2015-09-15 2018-12-18
+BayesElo LTC False 0.0 5.0 137 2014-11-08 2018-12-18
+BayesElo LTC False 0.0 4.0 112 2014-01-29 2019-10-18
+BayesElo STC False -1.5 4.5 109 2013-09-11 2020-01-23
+logistic LTC False 0.25 1.75 90 2020-02-05 2020-08-20
+logistic STC False -0.5 1.5 86 2020-02-05 2020-08-21
+BayesElo STC False 0.0 4.0 85 2014-07-27 2019-12-03
+BayesElo LTC False 0.0 6.0 79 2013-09-11 2015-07-30
+logistic STC False -0.25 1.25 77 2020-08-23 2021-03-18
+BayesElo LTC False 0.0 3.5 74 2019-01-06 2019-12-25
+normalized LTC False 0.5 3.0 69 2021-11-05 2022-08-06
+normalized LTC False 0.5 3.5 69 2021-04-25 2021-11-05
+normalized STC False 0.0 2.5 68 2021-11-05 2022-08-06
+normalized STC False -0.5 2.5 68 2021-04-25 2021-11-05
+logistic STC True -1.5 0.5 67 2020-01-23 2020-08-18
+logistic LTC False 0.25 1.25 65 2020-08-23 2021-03-18
+logistic LTC True -1.5 0.5 55 2020-01-23 2020-08-21
+normalized STC True -2.5 0.5 52 2021-04-25 2021-10-25
+BayesElo STC False 0.5 4.5 50 2019-01-06 2019-10-09
+normalized VVLTC False 0.5 2.5 49 2024-01-21 2026-08-19
+normalized LTC True -2.5 0.5 48 2021-04-28 2021-10-24
+normalized VVLTC False 0.0 2.0 41 2024-02-03 2026-07-16
+normalized  True -1.75 0.25 35 2023-02-09 2026-11-09
+normalized STC True -2.25 0.25 35 2021-11-05 2022-07-31
+logistic STC True -1.25 0.25 34 2020-08-22 2021-03-19
+normalized LTC True -2.25 0.25 32 2021-11-05 2022-07-31
+normalized  False 0.0 2.0 31 2022-10-16 2026-08-19
+BayesElo  True -3.0 1.0 31 2015-01-02 2019-11-06
+logistic LTC True -0.75 0.25 30 2020-08-21 2021-03-17
+normalized VLTC False 0.5 2.5 23 2022-09-07 2026-06-25
+normalized VLTC True -1.75 0.25 21 2023-05-20 2026-06-06
+logistic STC False -1.0 3.0 15 2020-01-07 2020-01-28
+logistic LTC False 0.0 2.0 14 2020-01-07 2020-01-28
+normalized VVLTC True -1.75 0.25 13 2024-05-18 2026-09-18
+normalized VLTC False 0.0 2.0 13 2023-03-14 2026-08-19
+BayesElo STC True -4.0 0.0 10 2014-02-08 2018-02-20
+normalized LTC False 0.0 2.0 7 2024-05-29 2026-06-25
+BayesElo  False 0.0 4.0 6 2015-07-30 2019-09-14
+logistic LTC True -0.7 0.2 5 2021-03-31 2021-04-28
+
+2013-2019 STC gainer n=338 median_games=23057 p90=67893
+2013-2019 STC nonreg n=386 median_games=35343 p90=90631
+2013-2019 LTC gainer n=398 median_games=32447 p90=110010
+2013-2019 LTC nonreg n=317 median_games=40479 p90=101445
+2013-2019 VLTC gainer n=6 median_games=90266 p90=142022
+2020-2021-04 STC gainer n=181 median_games=40240 p90=121832
+2020-2021-04 STC nonreg n=110 median_games=46245 p90=144664
+2020-2021-04 LTC gainer n=171 median_games=54560 p90=154848
+2020-2021-04 LTC nonreg n=92 median_games=30902 p90=95235
+2021-05-2023 STC gainer n=242 median_games=73436 p90=220704
+2021-05-2023 STC nonreg n=206 median_games=91236 p90=286768
+2021-05-2023 LTC gainer n=233 median_games=69144 p90=184664
+2021-05-2023 LTC nonreg n=187 median_games=89388 p90=277308
+2021-05-2023 VLTC gainer n=22 median_games=58518 p90=137804
+2024-2026 STC gainer n=336 median_games=96384 p90=327136
+2024-2026 STC nonreg n=455 median_games=114464 p90=284808
+2024-2026 LTC gainer n=261 median_games=109002 p90=312666
+2024-2026 LTC nonreg n=345 median_games=126042 p90=310680
+2024-2026 VLTC gainer n=16 median_games=44730 p90=139242
+2024-2026 VLTC nonreg n=19 median_games=118266 p90=385970
+2024-2026 VVLTC gainer n=90 median_games=53350 p90=153388
+2024-2026 VVLTC nonreg n=10 median_games=55213 p90=160314
+
+2013:0/182 2014:0/188 2015:0/218 2016:0/206 2017:0/194 2018:0/436 2019:0/352 2020:502/506 2021:403/403 2022:209/209 2023:402/402 2024:630/633 2025:640/640 2026:373/381
+
+2013-2019 STC median draw rate 0.598 n=778
+2013-2019 LTC median draw rate 0.683 n=725
+2020-2021-04 STC median draw rate 0.623 n=293
+2020-2021-04 LTC median draw rate 0.755 n=265
+2021-05-2023 STC median draw rate 0.486 n=459
+2021-05-2023 LTC median draw rate 0.489 n=425
+2024-2026 STC median draw rate 0.483 n=812
+2024-2026 LTC median draw rate 0.492 n=611
+
+[('', 4771), ('8', 47), ('1', 38), ('7', 29), ('3', 18), ('4', 10), ('20', 7), ('5', 5)]
+[('STC', 2452), ('LTC', 2118), ('', 200), ('VVLTC', 103), ('VLTC', 77)]

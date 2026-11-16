@@ -1,0 +1,14 @@
+# Stockfish 5d03b6e578a5 (pin), built from a copy of reference/stockfish/src:
+#   make -j6 build ARCH=x86-64-avx2   (g++ 15.2.0), default net nn-bddd9d57eb87.nnue (downloaded by the Makefile)
+# CPU: Intel Core i5-9500T @ 2.20GHz, 6 cores, AVX2 (no AVX-512, no VNNI), Linux. Not isolated from other load.
+# Command, run 3 times: ./stockfish bench 16 1 13   (16 MB hash, 1 thread, depth 13, built-in positions)
+# Date: 2026-11-16
+Total time (ms) : 2358
+Nodes searched  : 1442480
+Nodes/second    : 611738
+Total time (ms) : 1718
+Nodes searched  : 1442480
+Nodes/second    : 839627
+Total time (ms) : 1752
+Nodes searched  : 1442480
+Nodes/second    : 823333

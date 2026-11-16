@@ -1,0 +1,36 @@
+games 64830 pairs 32415 mu 0.50293 0.50293
+sigma_pg trinomial 0.3505 pentanomial 0.2404 variance ratio 0.471
+Ce/t 347.44
+nElo trinomial 2.91 pentanomial 4.24
+logistic Elo 2.04
+D 1046535
+
+r(pairing gain) dmu_pp sigma_pg^2 games pairs
+1.0 1.0 0.25 21674 10837
+1.0 1.5 0.25 9633 4817
+1.0 2.0 0.25 5419 2709
+1.0 2.5 0.25 3468 1734
+1.0 3.0 0.25 2408 1204
+1.55 1.0 0.1613 13983 6992
+1.55 1.5 0.1613 6215 3107
+1.55 2.0 0.1613 3496 1748
+1.55 2.5 0.1613 2237 1119
+1.55 3.0 0.1613 1554 777
+3.0 1.0 0.0833 7225 3612
+3.0 1.5 0.0833 3211 1606
+3.0 2.0 0.0833 1806 903
+3.0 2.5 0.0833 1156 578
+3.0 3.0 0.0833 803 401
+
+Elo per pp near 50%: 6.95
+unpaired SE for 200k games, pct 0.1118 ratio^2 0.648
+
+L1 256 rows 25 vector adds 400 row bytes(int8) 256 total KB 6.2
+L1 256 rows 160 vector adds 2560 row bytes(int8) 256 total KB 40.0
+  dense MACs (L1x2->16->32->1) 9280
+L1 512 rows 25 vector adds 800 row bytes(int8) 512 total KB 12.5
+L1 512 rows 160 vector adds 5120 row bytes(int8) 512 total KB 80.0
+  dense MACs (L1x2->16->32->1) 17472
+L1 1024 rows 25 vector adds 1600 row bytes(int8) 1024 total KB 25.0
+L1 1024 rows 160 vector adds 10240 row bytes(int8) 1024 total KB 160.0
+  dense MACs (L1x2->16->32->1) 33856
