@@ -105,10 +105,12 @@ The approved stage-1 plan is [plans/stage1-plan.md](plans/stage1-plan.md).
 - **Licence: GPL-3.0 is acceptable, MIT is preferred** (decided 2026-11-16). Owner:
   "GPL's fine. It'd be preferable to be MIT, but I'm okay with GPL as well." So forking
   Quackle, Macondo or MAGPIE is allowed. The fork base itself stays open until R6
-  (stage-1 step 5). From the stage-1 plan, not the owner's words: in R6 the licence is a
-  tiebreaker, not a blocker. Choose on strength, speed and how easily a neural eval
-  fits; prefer the MIT option (wolges, or our own code) only when the call is close. The
-  language follows the fork; network training is in Python either way.
+  (stage-1 step 5).
+
+  Set by the orchestrating session from the owner's words (relayed 2026-11-16), not the
+  owner's own wording: in R6, MIT is preferred; it weighs in favour of wolges or our own
+  code, decisively when the other criteria are close. Language stays its own R6
+  criterion. Note, not a decision: network training is in Python either way.
 - **"Eclipse" is Elise** (decided 2026-11-16). Elise (closed, Windows) stays deferred
   until the open engines are measured; see "Suggested order".
 - **Lexicon: Collins Scrabble Words (CSW)** (decided 2026-11-16), the latest edition the
@@ -124,23 +126,29 @@ The approved stage-1 plan is [plans/stage1-plan.md](plans/stage1-plan.md).
     (`test/regression/suites/csw24-english/suite.json:3`).
   - Macondo `9c33baa636258ce1a2add1e843f9c8ce1a939436`: Collins value net trained on
     CSW24 self-play games (`README.md:98`); tests use CSW24 (`wmp/wmp_test.go:13`) and
-    older CSW19/CSW21 (`endgame/negamax/solver_test.go:203`).
-  - MAGPIE `b78101815898641c5f449a7d8b51101b58a2caf0`: `make prepare_data` builds CSW24
-    tables (`AGENTS.md:19`); README examples use `set -lex CSW24` (`README.md:249`); most
+    older CSW19 (`endgame/negamax/solver_test.go:203`) and CSW21 (`:206`).
+  - MAGPIE `b78101815898641c5f449a7d8b51101b58a2caf0`: `make prepare_data` validates or
+    upgrades the CSW24 WIT and creates a missing RIT (`AGENTS.md:19`); README examples use `set -lex CSW24` (`README.md:249`); most
     unit tests use CSW21 (`test/test_constants.h:9`). `download_data.sh:66-68` fetches
     versioned tarballs and does not name editions.
-  - wolges `be00002981690e22eada4df871da067bd88f7719`: setup uses `CSW24.kwg`
-    (`README.md:44`).
+  - wolges `be00002981690e22eada4df871da067bd88f7719`: quick start uses `CSW24.kwg`
+    (`README.md:44`); its Initial Setup builds CSW19 (`README.md:31-33`).
   - No edition newer than CSW24 appears in these clones (grep for `CSW2[5-9]`/`CSW3x`).
-- **Ruleset: owner check, not a blocker.** The owner named no challenge rule. Proposed
-  default for matches (not the owner's words): WESPA rules, 5-point challenge for CSW
-  (UNVERIFIED: no WESPA rules link checked yet). Macondo `9c33baa636258ce1a2add1e843f9c8ce1a939436`
-  implements this rule (`game/challenge.go:166`, `ChallengeRule_FIVE_POINT`).
+
+## Process decisions (orchestrator)
+
+- **Ruleset.** Matches use WESPA rules: CSW with a 5-point challenge. Decided by the
+  orchestrator as a process choice; the owner named no rule. (UNVERIFIED: no WESPA rules
+  link checked yet.) Macondo `9c33baa636258ce1a2add1e843f9c8ce1a939436` implements this
+  rule (`game/challenge.go:166`, `ChallengeRule_FIVE_POINT`).
 
   Inference: bot-vs-bot games rarely involve phonies, so the challenge rule should
   seldom change results.
 
 ## Suggested order
 
-R1 (open engines) and R4 in parallel → R2 harness → R3 → R5 → R6.
+Follows the approved [stage-1 plan](plans/stage1-plan.md): harness first. Step 2a (reuse
+check) → 2b/2c (headless builds, adapters), with the MAGPIE dossier in parallel → 2d
+(baseline matches, MAGPIE profile), with the other dossiers and the Stockfish study in
+parallel → step 5 synthesis (R6).
 Closed engines (Elise, Maven) after the open ones, since they are the costliest.

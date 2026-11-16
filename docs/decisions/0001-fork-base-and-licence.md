@@ -24,11 +24,10 @@ Filled in from the engine dossiers.
 **Licence (owner, 2026-11-16):** "GPL's fine. It'd be preferable to be MIT, but I'm okay
 with GPL as well." GPL-3.0 is acceptable; MIT is preferred.
 
-How R6 applies it (from the approved stage-1 plan, `docs/plans/stage1-plan.md`, step 5;
-not the owner's words): licence is a tiebreaker, not a blocker. Choose on strength,
-speed and how easily a neural evaluation fits. Prefer the MIT option (wolges, or our own
-code) only when the call is close. The language follows the fork; network training is in
-Python either way.
+How R6 applies it. Set by the orchestrating session from the owner's words (relayed
+2026-11-16), not the owner's own wording: MIT is preferred; it weighs in favour of wolges
+or our own code, decisively when the other criteria are close. Language stays its own R6
+criterion. Note, not a decision: network training is in Python either way.
 
 **Fork base:** open until R6.
 

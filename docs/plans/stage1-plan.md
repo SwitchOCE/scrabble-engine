@@ -1,4 +1,5 @@
-Approved by the owner 2026-11-16, along with: GPL acceptable, MIT preferred (licence is a tiebreaker); include the Stockfish ranked table; include abandoned PRs in leave/sim/endgame in dossiers.
+Approved by the owner 2026-11-16, along with: GPL acceptable, MIT preferred; include the Stockfish ranked table; include abandoned PRs in leave/sim/endgame in dossiers.
+Later notes: the GPL question (step 1 of Order) is answered: GPL acceptable, MIT preferred.
 
 # Stage 1 plan, steps 2–5 (revised after plan-interrogate)
 
