@@ -5,7 +5,7 @@ Pinned commits: `pins.tsv` (written by `scripts/fetch-references.sh`).
 | Engine | Source | Language | Licence | Status | Dossier |
 | --- | --- | --- | --- | --- | --- |
 | Quackle | [quackle/quackle](https://github.com/quackle/quackle) | C++ (Qt GUI) | GPL-3.0 | Open, maintained. Championship Player still a reference strength. | [quackle.md](quackle.md) |
-| Macondo | [domino14/macondo](https://github.com/domino14/macondo) | Go | GPL-3.0 | Open, active. Powers Woogles BestBot. | [macondo.md](macondo.md) |
+| Macondo | [domino14/macondo](https://github.com/domino14/macondo) | Go | GPL-3.0 | Open, active. Powers Woogles BestBot. Ships a CSW24 transformer value net (1-ply ranker, level with a 2-ply sim in NWL23); Bayesian rack inference (+0.8 win pts); PEG only at 1 in bag. Moving onto MAGPIE's core (#538, open). | [macondo.md](macondo.md) |
 | MAGPIE | [jvc56/MAGPIE](https://github.com/jvc56/MAGPIE) | C | GPL-3.0 | Open, very active (pin `b781018`, 2026-11-15). Started as a C rewrite of Macondo, now ahead of it: BAI simulation with rack inference, ABDADA endgame, 1–4-in-bag PEG, census leavegen. Evaluation is still tables (KLV leaves, linear PAT, win% table at sim leaves); a sim-leaf model (#527) and a GPU value net (branch `vn-nnue-m5`) are experiments, not in main. | [magpie.md](magpie.md) |
 | wolges | [andy-k/wolges](https://github.com/andy-k/wolges) | Rust | MIT | Open, active. Fast movegen, KWG/KLV formats used by Woogles. | [wolges.md](wolges.md) |
 | Elise | Closed (Windows) | ? | Proprietary | The owner's "Eclipse" (decided). Deferred until the open engines are measured. Need a working build. | [elise.md](elise.md) |
