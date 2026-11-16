@@ -19,8 +19,8 @@ Lexicon: Collins, latest edition all of Quackle, Macondo and MAGPIE have data fo
 - **Depth** goes on leave valuation, simulation (including rack inference) and endgame/pre-endgame. Move generation, exchanges, time management, threading, build and UI get one paragraph each, never left blank.
 - **PR/issue history** only where it explains a change to those three parts. That includes the CLOSED/abandoned PRs in those areas (what was tried and dropped).
 - **Key literature** goes in as sources: the Maven paper, Macondo/Woogles posts on leaves and simulation.
-- Each dossier ends with "Relevance to the three decisions". It must answer directly: **how hard it is to add a neural evaluation** (where evaluation happens in the code, and the per-position cost budget inside simulation).
-- The wolges dossier must also answer: **what wolges lacks compared with MAGPIE** (simulation, endgame, pre-endgame, rack inference, autoplay), with a rough work estimate for each piece.
+- Each dossier ends with "Relevance to the three decisions". [added after approval, from the owner's licence answer relayed by the orchestrating session] It must answer directly: **how hard it is to add a neural evaluation** (where evaluation happens in the code, and the per-position cost budget inside simulation).
+- [added after approval, from the owner's licence answer relayed by the orchestrating session] The wolges dossier must also answer: **what wolges lacks compared with MAGPIE** (simulation, endgame, pre-endgame, rack inference, autoplay), with a rough work estimate for each piece.
 - Gates: citation spot-check (cited SHAs are in pins.tsv; path:line exists at that SHA), then the scope-reviewer.
 
 ## Step 4 — Stockfish, narrow
@@ -36,7 +36,7 @@ Lexicon: Collins, latest edition all of Quackle, Macondo and MAGPIE have data fo
   - **(b) Where a neural eval pays off.**
   - **(c) How we prove we are stronger**, i.e. the test method and baseline.
 - Evidence: steps 2–4.
-- **Licence is a tiebreaker, not a blocker** (owner: GPL fine, MIT preferred). Choose on strength, speed and how easily a neural eval fits. Prefer the MIT option (wolges, or our own code) only when the call is close. The language follows the fork; network training is in Python either way.
+- [added after approval, from the owner's licence answer relayed by the orchestrating session] **Licence** (owner: GPL fine, MIT preferred). Set by the orchestrating session from the owner's words, not the owner's own wording: MIT is preferred; it weighs in favour of wolges or our own code, decisively when the other criteria are close. Language stays its own criterion. Note, not a decision: network training is in Python either way.
 - Gates: the scope-reviewer; the owner approves.
 
 ## Order
@@ -53,5 +53,5 @@ Checkpoints: after 2a, after the MAGPIE dossier, after 2d, after step 5.
 - **Full R1b history docs:** when a dossier finds a change to leave, sim or endgame it can't explain.
 - **R5 corpora and self-play data:** when net training is planned.
 - **Stockfish PR threads:** when a ranked technique needs its reasoning.
-- **wolges in the harness:** a static-eval match only, if 2a shows its adapter is cheap, so the MIT tiebreaker has a measured strength behind it. Otherwise, add it only if step 5's call turns out close.
+- [added after approval, from the owner's licence answer relayed by the orchestrating session] **wolges in the harness:** a static-eval match only, if 2a shows its adapter is cheap, so the MIT preference has a measured strength behind it. Otherwise, add it only if step 5's call turns out close.
 - **GPU compute:** later.
