@@ -5,8 +5,7 @@ Step 2a asks what autoplay / bot-vs-bot modes Quackle, Macondo and MAGPIE alread
 what formats they read and write, and whether any can already play a *different* engine.
 wolges was added to the scope by the orchestrator.
 
-Pins (from `reference/PINS.tsv`; the clone HEADs were not re-checked with git, because the
-worktree sandbox blocks git commands aimed at `reference/`):
+Pins (from `reference/PINS.tsv`; each clone's HEAD ref matches its pin):
 
 | Engine | Short SHA | Licence |
 | --- | --- | --- |
@@ -20,7 +19,7 @@ Rust toolchain (`go`, `cargo` not on PATH; `gcc`, `clang`, `cmake`, Qt6 are pres
 
 ## Verdict on the plan review's claims
 
-All four claims hold.
+**Checkpoint: yes. Macondo autoplay replaces a new harness.** All four claims hold.
 
 - The external-engine player exists. It runs `<binary> <extra args> --gcg=<file> --lexicon=<name> --rack=<tiles>` and reads one JSON line back (macondo@9c33baa `ai/externalengine/player.go:62-155`, `ai/externalengine/config.go:3-11`).
 - It is wired in as `CUSTOM_BOT` at macondo@9c33baa `automatic/config.go:79-84`, and the runner uses it at `automatic/game_runner.go:209-219`.
@@ -111,10 +110,18 @@ end (`game/pairedbag.go:8-34`). Pairing only takes effect with a non-zero seed
 (`game_runner.go:306-308`). If no seed is given, one is generated and logged
 (`automatic_utils.go:325-335`).
 
-The pairs-mode guard refuses a built-in simming bot unless `simthreads` is 1
-(`automatic_utils.go:363-374`). In paired mode the runner also drops the 30-second
-per-turn deadline for built-in bots, so a Macondo sim stops on its own `Stop99`
-condition (`game_runner.go:373-380`; `ai/bot/elite.go:312`).
+Pairs mode has two guards:
+
+- It refuses a built-in simming bot unless `simthreads` is 1 (`automatic_utils.go:363-374`).
+- It gives an inferring bot a leaf budget in place of a clock limit (`DefaultPairedInferenceBudget`) unless a budget is set (`automatic_utils.go:375-386`).
+
+Before the bag is empty, pairs mode also drops the 30-second per-turn deadline
+(`MaxTimePerTurn`, `game_runner.go:32`) for built-in bots, so a Macondo sim stops on its
+own `Stop99` condition (`game_runner.go:373-380`; `ai/bot/elite.go:312`). The comment at
+`:374-379` says this is deliberate: a wall-clock budget makes the move depend on machine
+load, which is the noise pairs exist to remove. The endgame keeps its deadline
+(`MaxTimePerEndgame` = 15 s, `game_runner.go:33, 366, 382`), so it is the one part of a
+paired game that does not replay exactly.
 
 **Where results land** (`autoplay.txt:13-19`; `automatic_utils.go:258-273, 425-436`). All
 three files go in `outputDir`:
@@ -123,8 +130,12 @@ three files go in `outputDir`:
 - `games-{experimentId}.txt`: one CSV row per game, `gameID,p1_score,p2_score,…,first`, plus `pair,divergent` in pairs mode (`automatic_utils.go:549-552`, `:139-150`).
 - `{experimentId}.config.json`: the resolved config.
 
-No per-game GCG is written. The engine's stdout and its decoded move go to Macondo's zerolog
-on stderr (`player.go:99-115`). `autoanalyze games-<id>.txt` in the shell runs
+Autoplay writes no per-game GCG, but one can be rebuilt from the turn log with
+`autoanalyze <turn-log> -export <gameID> [-half 2]`. In pairs mode the game ID names a
+pair, and `-half` picks which seating to write (`shell/api.go:1839-1885`;
+`automatic/logfile_analysis.go:567-700`, `ExportGCG`). That is the route for the 2c
+gate's replay check. The engine's stdout and its decoded move go to Macondo's zerolog on
+stderr (`player.go:99-115`). `autoanalyze games-<id>.txt` in the shell runs
 `AnalyzeLogFile`, which gives pair-level margin and win p-values (sign-flip and paired t)
 (`shell/api.go:1833-1914`; `automatic/logfile_analysis.go:57-211`). There is no SPRT
 (grep for `sprt` finds nothing in Macondo or MAGPIE).
@@ -134,7 +145,7 @@ on stderr (`player.go:99-115`). `autoanalyze games-<id>.txt` in the shell runs
 The contract is small and fits a one-shot CLI. Its weak points for a fair match:
 
 - **No clock.** Every engine has to be given a fixed per-move budget through its own flags.
-- **The GCG leaks the opponent's earlier racks.** Quackle and MAGPIE do not use that leak by default (see below), but our own engine could use it without anyone noticing.
+- **The GCG leaks the opponent's earlier racks.** Quackle and MAGPIE do not appear to read the leak (see their Inference sections), but our own engine could use it without anyone noticing.
 - **A new process every turn.** Each engine reloads its lexicon and leaves every turn. That adds wall-clock time but not think time, as long as the engine's timer starts after loading.
 
 ## 2. MAGPIE
@@ -154,11 +165,11 @@ The contract is small and fits a one-shot CLI. Its weak points for a fair match:
   - `shmoves` prints the move list.
   - There is no `bestmove` / PlayChooser command for a single position.
 - **Sim limits.** `-plies`, `-tlim` seconds (default 60), `-iterations`, `-scondition` and `-threads` (`README.md:445-452`; `src/impl/help_table.c` `sim_rows`). `-sinfer true` (the default) infers the opponent's leave from their last play.
-- **Opponent rack handling.** If no rack is given, `simulate` sims against "the opponent's currently known rack" (`config.c:4268-4274`). When a GCG is replayed, the off-turn rack is filled only from tiles exposed by phonies, or from all unseen tiles once the bag is empty (`src/impl/gameplay.c:1287-1297`). So the rack fields in Macondo's GCG do not leak into MAGPIE's sim.
+- **Opponent rack handling.** If no rack is given, `simulate` sims against "the opponent's currently known rack" (`config.c:4268-4274`). When a GCG is replayed, the off-turn rack is filled only from tiles exposed by phonies, or from all unseen tiles once the bag is empty (`src/impl/gameplay.c:1287-1297`).
 - **Move notation.** MAGPIE prints moves as `8D JE(E)P`, with played-through letters in parentheses, blanks lowercase, `(exch QV)` for an exchange and `pass` for a pass (`src/str/move_string.c:58-120`).
 - **Autoplay** is self-play only. `autoplay games N -gp true -seed S` gives game pairs (`README.md:645-660`). `-pc1` / `-pc2` give each side a PlayChooser clock (total ms per game). PlayChooser then picks static, sim, pre-endgame or endgame play from the position (`README.md:662-720`; `config.c:5485-5493`).
   - `play_chooser_choose_move` exists as a C function that takes a `fixed_seconds_per_move` and passes on only tiles "known … via … phonies" (`src/impl/play_chooser.h:54-77, 209-214`).
-  - MAGPIE cannot drive another engine: the only `popen` is in `get_gcg.c`, which downloads games.
+  - Nothing in MAGPIE runs another engine. There is no `popen` call in `src/` at b781018: `get_gcg.c:25-28` is a comment saying the old `curl`-through-`popen` code was replaced with an HTTP layer.
 - **Data.** Data comes from a ~195 MB download (`download_data.sh`; `README.md:227-240`). Nothing is downloaded in the clone yet (`data/` is absent).
 
 **Can MAGPIE take a position and rack and return one move headlessly?** Yes, through
@@ -178,16 +189,20 @@ start is not checked; an adapter should send `goto end` to be safe.
 
 ### Inference
 
+From the replay code above, the rack fields in Macondo's GCG should not leak into
+MAGPIE's sim.
+
 A script adapter can only reach MAGPIE's console commands, so it has to repeat
 PlayChooser's phase choice itself (sim, pre-endgame or endgame). A C adapter calling
 `play_chooser_choose_move` with `fixed_seconds_per_move` gets exactly how MAGPIE plays in
-its own timed autoplay. That is the fairer comparison.
+its own timed autoplay. That is the fairer comparison, and it is the planned primary
+adapter.
 
 ## 3. Quackle
 
 ### Facts
 
-- **Headless harness.** `test/testharness.cpp` builds `quackletest` (`test/CMakeLists.txt:35`).
+- **Headless harness.** `test/testharness.cpp` builds `libquackle_test`, which links `quackleio`, `libquackle` and Qt Core (`test/CMakeLists.txt:23-31`). The binary named `quackletest` is something else: it is built from `../quackletest.cpp` as a Qt-free libquackle smoke test (`test/CMakeLists.txt:33-38`).
   - It has `--mode=positions|report|selfplay|…`, `--position=game.gcg` (can be repeated), `--computer=`, `--computer2=`, `--lexicon=`, `--seed=`, `--repetitions=` and `--threads=` (quackle@35e11bb `test/testharness.cpp:105-134, 136-237`).
   - `positions` mode loads each GCG, takes its current position and prints the top 10 moves as text (`:282-292, 622-647`).
   - `selfplay` plays a computer against `--computer2` (`:714-745`).
@@ -203,9 +218,9 @@ its own timed autoplay. That is the fairer comparison.
   - `Resolvent` hands off to `EndgamePlayer` when the bag is empty, `Preendgame` when the bag is low, and `SmartBogowin` otherwise (`resolvent.cpp:42-74`).
   - `SmartBogowin` sims 2 plies with `minIterations = 2·secondsPerTurn` and `maxIterations = 5·secondsPerTurn`, and stops when `secondsPerTurn` is exceeded (`bogowinplayer.cpp:38-44, 138-215`; `bogowinplayer.h:67-80`).
   - The time budget is `ComputerParameters.secondsPerTurn`, set with `setParameters`. Threads are set with `setThreadCount` (`computerplayer.h:31-38, 79, 134-152`).
-- **Opponent racks in the sim** are drawn from the unseen bag, starting from `m_partialOppoRack`, which is only set when a caller sets it (`sim.cpp:785-811`). So the rack fields in Macondo's GCG do not leak.
+- **Opponent racks in the sim** are drawn from the unseen bag, starting from `m_partialOppoRack`, which is only set when a caller sets it (`sim.cpp:785-811`).
 - **Lexicon.** `data/lexica/csw24.dawg` ships with Quackle. No `.gaddag` ships; it is built with `makegaddag`. CSW strategy falls back to `data/strategy/csw/superleaves` (`datamanager.cpp:150-151`).
-- **GCG compatibility.** Quackle's GCG reader takes `#player`, `#character-encoding`, `#note` and move lines. It ignores `#lexicon` (the lexicon is set on `DataManager`), and Macondo does not write one anyway (`quackleio/gcgio.cpp:76-140`). After reading, `setCurrentPlayerRack` sets the rack on turn (`game.h:330`, used at `gcgio.cpp:279`).
+- **GCG compatibility.** Quackle's GCG reader takes `#player`, `#character-encoding`, `#note` and move lines. It ignores `#lexicon` (the lexicon is set on `DataManager`), and Macondo does not write one anyway (`quackleio/gcgio.cpp:76-140`). The reader itself calls `setCurrentPlayerRack` while it replays move lines (`gcgio.cpp:279`), and the same public method (`game.h:330`) can set the rack on turn after loading.
 
 **Smallest adapter.** A ~150–250-line C++ program that:
 
@@ -217,6 +232,11 @@ its own timed autoplay. That is the fairer comparison.
 
 This is presumably what `quackle-evaluator` is (UNVERIFIED). Building it means building
 `libquackleio`, which needs Qt.
+
+### Inference
+
+As long as the adapter never calls `setPartialOppoRack`, the rack fields in Macondo's
+GCG should not leak into Quackle's sim.
 
 ## 4. wolges (added scope)
 
@@ -264,10 +284,11 @@ handles the opponent's rack.
 
 ### Inference
 
-**Recommended match settings**
+**Proposed match settings, for decision in step 2d.** These are proposals, not decided
+settings.
 
 - **Same word list.** All engines build CSW24 from the same source text. Compare word counts or dumps once before the first match, because Quackle's shipped `csw24.dawg` was built separately.
-- **Leaves.** Each engine uses its own shipped leaves for CSW24, because we are testing the engines as their authors tune them. A second, controlled run can give Macondo, MAGPIE and wolges the same `.klv2` to isolate search from leaves. Quackle cannot share one, because superleaves is a different format.
+- **Leaves.** Each engine uses its own shipped leaves for CSW24, because we are testing the engines as their authors tune them.
 - **Equal time.** Give every sim engine the same fixed seconds per move, set through its own flag. Quackle's iteration cap (5 × seconds) can stop it early, and Macondo's `Stop99` can too, so log wall time per move in each adapter and report the time actually used, not just the budget.
 - **Threads.** Use one thread per engine and no more concurrent games than cores. On this 6-core machine, use `-threads 5`, which leaves a core for Macondo and the OS. Alternatively, run one game at a time with N threads each. Never oversubscribe.
 - **Pairs.** Use `-gamepairs` with a seed. With timed sims the two halves of a pair will diverge, but both seats still start from the same tiles. Report the `divergent` fraction.
@@ -279,11 +300,10 @@ handles the opponent's rack.
 | Item | Size (estimate) | Notes |
 | --- | --- | --- |
 | Quackle adapter (C++, links libquackle + libquackleio + Qt6) | 150–250 lines + CMake target | GPL, because it links Quackle. Keep it in a separate GPL directory, not in engine code. Also build `csw24.gaddag` |
-| MAGPIE adapter v1 (Python driving `bin/magpie` in sync mode) | 100–150 lines | Does not link MAGPIE, so the licence question doesn't arise. Must repeat the phase choice: sim / `peg` (bag 1–4) / `endgame` (bag 0). Parses `shmoves` and strips the `( )` |
-| MAGPIE adapter v2 (C, `play_chooser_choose_move`) | ~200 lines | GPL; same play as MAGPIE's own timed autoplay |
+| MAGPIE adapter, primary (C, `play_chooser_choose_move`, fixed seconds per move) | ~200 lines | GPL. Plays the same way as MAGPIE's own timed autoplay |
+| MAGPIE adapter, fallback (Python driving `bin/magpie` in sync mode) | 100–150 lines | Only if the C build is hard. Does not link MAGPIE, so the licence question doesn't arise. Must repeat the phase choice: sim / `peg` (bag 1–4) / `endgame` (bag 0). Parses `shmoves` and strips the `( )` |
 | wolges adapter | 80–120 lines script, or ~150 lines Rust | MIT. Needs `cargo` |
-| Macondo per-move time flag for built-in sim bots | ~20 lines Go (proto field, `config.go`, `shell.go`) | Needed for an equal-time Macondo vs X match. Would be a local patch, recorded in the dossier |
-| Redact opponent racks in the GCG passed to engines | ~30 lines (in each adapter, or one Macondo patch) | Stops a dishonest engine, e.g. ours, from reading the opponent's earlier racks |
+| Macondo per-move time flag for built-in sim bots | ~20–30 lines Go: proto field, `config.go`, `shell.go`, and the pairs branch at `game_runner.go:373-380` | Needed for an equal-time Macondo vs X match. Would be a local patch, recorded in the dossier. In pairs mode it reverses Macondo's deliberate choice to run sims with no deadline (comment at `:374-379`), so timed pairs no longer replay exactly and machine-load noise comes back |
 | SPRT stopping | ~100 lines on top of `games-*.txt` | Neither Macondo nor MAGPIE has it |
 | Toolchains | install Go ≥ 1.24 (`go.mod`), Rust/cargo | Macondo and wolges cannot be built here today |
 
@@ -297,10 +317,14 @@ handles the opponent's rack.
 
 - **Reuse Macondo autoplay** as the referee. That gives `CUSTOM_BOT`, `-gamepairs` with a seed, `games-*.txt` and `autoanalyze` for paired statistics. Install Go first.
 - **Write three thin adapters to the `--gcg --lexicon --rack` → JSON contract:**
-  - **MAGPIE:** first a Python sync-mode driver, later a C PlayChooser adapter.
+  - **MAGPIE:** a C program calling `play_chooser_choose_move` with fixed seconds per move. The orchestrator decided this is the primary; the sync-mode Python driver is only a fallback if the C build is hard.
   - **Quackle:** a C++ program on `libquackle`/`libquackleio`, with `--player` and `--seconds`.
   - **wolges:** a script around `shell`, or a Rust binary. A static-eval wolges match is the cheapest first match.
-- **Patch Macondo minimally** (local branch, recorded in the dossier): a per-move time field for built-in sim bots, plus GCG rack redaction for engines we don't trust.
+- **Patch Macondo minimally** (local branch, recorded in the dossier): a per-move time field for built-in sim bots. This brings timing noise back into pairs mode (see Gaps).
+
+### Deferred
+
+- **GCG rack redaction** (~30 lines, in each adapter or one Macondo patch). It would stop an engine from reading the opponent's earlier racks from the GCG. The orchestrator deferred it until our own engine plays, because no stage-1 engine is known to read the leak.
 
 ## Open questions
 
@@ -311,3 +335,4 @@ handles the opponent's rack.
 5. Does the wolges `shell` read piped stdin? Does `gcg load` treat the opponent's kept tiles as known?
 6. Are Quackle's `csw24.dawg`, MAGPIE's CSW24 KWG and Macondo's CSW24 KWG the same word list?
 7. Do the Quackle SWIG bindings still build against the CMake/Qt6 build? (This only matters if we prefer Python for the Quackle adapter.)
+8. Idea, dropped from stage 1: a controlled run that gives Macondo, MAGPIE and wolges the same `.klv2`, to separate search strength from leave quality. Quackle can't join, because superleaves is a different format.
