@@ -95,21 +95,29 @@ licence, how active it is and whether its authors would welcome collaboration.
 
 ## Open decisions for the project owner
 
-1. **Licence.** Forking Quackle, Macondo or MAGPIE means our engine is GPL-3.0.
-   Forking wolges (MIT) or writing from scratch leaves the choice open.
-2. **GPU compute.** This machine has no NVIDIA GPU. Training nets at Stockfish scale
+1. **GPU compute.** This machine has no NVIDIA GPU. Training nets at Stockfish scale
    needs rented or owned GPUs.
 
 ## Decided by the project owner
 
+The approved stage-1 plan is [plans/stage1-plan.md](plans/stage1-plan.md).
+
+- **Licence: GPL-3.0 is acceptable, MIT is preferred** (decided 2026-11-16). Owner:
+  "GPL's fine. It'd be preferable to be MIT, but I'm okay with GPL as well." So forking
+  Quackle, Macondo or MAGPIE is allowed. The fork base itself stays open until R6
+  (stage-1 step 5). From the stage-1 plan, not the owner's words: in R6 the licence is a
+  tiebreaker, not a blocker. Choose on strength, speed and how easily a neural eval
+  fits; prefer the MIT option (wolges, or our own code) only when the call is close. The
+  language follows the fork; network training is in Python either way.
 - **"Eclipse" is Elise** (decided 2026-11-16). Elise (closed, Windows) stays deferred
   until the open engines are measured; see "Suggested order".
 - **Lexicon: Collins Scrabble Words (CSW)** (decided 2026-11-16), the latest edition the
-  engines support, for all matches and benchmarks. Edition to be confirmed when the
-  engines are built; likely CSW24. Lexicon files and built KWG/DAWG/GADDAG files stay
-  uncommitted under `data/`. The owner did not name a ruleset (challenge rule etc.).
+  engines support, for all matches and benchmarks. **Edition: CSW24**, confirmed from
+  the pinned sources below (all four open engines reference it, none references a newer
+  one); stage-1 step 2b checks the built data matches. Lexicon files and built
+  KWG/DAWG/GADDAG files stay uncommitted under `data/`.
 
-  Editions the reference clones use (pins in `docs/engines/pins.tsv`):
+  Editions the reference clones use for the CSW24 finding (pins in `docs/engines/pins.tsv`):
   - Quackle `35e11bb21a3bf362c533541d0b5fe8ad92a0c08f`: ships `csw24.dawg`
     (`data/lexica/CMakeLists.txt:5`); `data/lexica/copyrights.txt:10` names "Collins
     Offical Scrabble™ Wordlist 2024"; regression suite for csw24
@@ -124,9 +132,13 @@ licence, how active it is and whether its authors would welcome collaboration.
   - wolges `be00002981690e22eada4df871da067bd88f7719`: setup uses `CSW24.kwg`
     (`README.md:44`).
   - No edition newer than CSW24 appears in these clones (grep for `CSW2[5-9]`/`CSW3x`).
+- **Ruleset: owner check, not a blocker.** The owner named no challenge rule. Proposed
+  default for matches (not the owner's words): WESPA rules, 5-point challenge for CSW
+  (UNVERIFIED: no WESPA rules link checked yet). Macondo `9c33baa636258ce1a2add1e843f9c8ce1a939436`
+  implements this rule (`game/challenge.go:166`, `ChallengeRule_FIVE_POINT`).
 
-  Inference: CSW24 is the newest edition all four open engines reference, so it is the
-  likely target.
+  Inference: bot-vs-bot games rarely involve phonies, so the challenge rule should
+  seldom change results.
 
 ## Suggested order
 

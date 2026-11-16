@@ -14,7 +14,6 @@ Pinned commits: `pins.tsv` (written by `scripts/fetch-references.sh`).
 Also relevant: [woogles-io/liwords](https://github.com/woogles-io/liwords) (AGPL-3.0),
 the Woogles server; useful for game formats and bot integration, not an engine.
 
-Lexicon for all matches and benchmarks: Collins (CSW), latest edition the engines
-support, likely CSW24 (see "Decided by the project owner" in `../research-plan.md`).
+Lexicon for all matches and benchmarks: Collins, edition CSW24 (see "Decided by the project owner" in `../research-plan.md`).
 
 Dossiers are created as research starts; missing links are expected.
