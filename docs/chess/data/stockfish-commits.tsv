@@ -92,7 +92,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2026-09-09	55cf867cf5	7121	closes	untested	non-functional	uci-io		0									2	Make dbg_* methods return the inspected variable
 2026-09-09	9287f1654a	7119	closes	untested	non-functional	time		0									2	[bugfix] Apply cyclic TCs when in nodestime
 2026-09-09	8f6a95de2f	7115	closes	gain	speedup	search		1	1.41					1.41	STC		1	Use a local accumulator to eliminate redundant stores to m.value
-2026-09-09	5ca4bfe72b	7113	closes	gain	speedup	time	time-management	4	1.13	1.08				1.08	LTC		1	Decrease time usage if engine has time disadvantage.
+2026-09-09	5ca4bfe72b	7113	closes	gain	non-functional	time	time-management	4	1.13	1.08				1.08	LTC		1	Decrease time usage if engine has time disadvantage.
 2026-09-09	3a7b56a4e4	7112	closes	gain	simplification	search	razoring	2	1.08	1.46				1.46	LTC		1	Simplify quadratic depth in Razoring
 2026-09-09	0c5892a95e	7111	closes	gain	other-functional	search	null-move	2	1.3	1.27				1.27	LTC		2	Use the number of prior NMP Fail High in search
 2026-09-09	0e24f3f205	7110	closes	untested	non-functional	search,threads	smp-threads	0									4	use nullptr instead of Null object pattern for SearchManager
@@ -428,7 +428,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2026-01-15	0b9068d510	6540	closes	untested	bugfix	search		0									1	Fix integer overflow.
 2026-01-11	eb5a65aeb0	6538	closes	untested	non-functional	threads		0									1	Fix RelationCache on Windows 10 compiles
 2026-01-11	e9b2864579	6522	closes	nonreg	non-functional	nnue		1									1	Simplify make_index
-2026-01-10	d852a9195e	6532	closes	gain	speedup	movegen-position,time,uci-io	speedup	1	0.24					0.24	STC		6	Make enums unsigned
+2026-01-10	d852a9195e	6532	closes	gain	non-functional	movegen-position,time,uci-io	speedup	1	0.24					0.24	STC		6	Make enums unsigned
 2026-01-10	9b8c5c9f75	6535	closes	nonreg	simplification	search	reductions-lmr	2									1	Simplify fail high reduction formula
 2026-01-10	b4d4eecfb2	6526	closes	untested	non-functional	threads,uci-io	smp-threads	0									2	Make shared history allocation aware of non-uniform cache access
 2026-01-10	1928ef9571	6533	closes	untested	build-ci-docs	build-ci		0									2	Compiler Check
@@ -695,7 +695,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2025-05-19	4f76768fcf	6067	closes	nonreg	simplification	search	lmp-movecount	2									1	Remove a moveCount condition
 2025-05-19	1b6975ac41	6066	closes	gain	other-functional	docs,search		2	1.33	1.81				1.81	LTC		3	Add quiet move streak tracking to search stack
 2025-05-19	6f445631ab	6065	closes	nonreg	simplification	search	futility	2									1	Simplify Futility Margin
-2025-05-19	e4b0f37493	6063	closes	gain	speedup	movegen-position,time,uci-io		1	1.29					1.29	STC		4	Shrink Enum Sizes
+2025-05-19	e4b0f37493	6063	closes	gain	non-functional	movegen-position,time,uci-io		1	1.29					1.29	STC		4	Shrink Enum Sizes
 2025-05-19	6b7e05f0c5	6061	closes	nonreg	simplification	search		2									2	Simplify PCM TTMove Bonus
 2025-05-19	07f6edf934	6045	closes	untested	non-functional	movegen-position		0									1	Refactor Position::pseudo_legal Pawn Move Check
 2025-05-13	c4e2479a75	6060	closes	gain	other-functional	search		2	3.38	1.18				1.18	LTC		1	Introducing a depth component to the penalty.
@@ -1406,7 +1406,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2023-12-22	358a853790			untested	other-functional	search	qsearch	0									1	Revert "Adjust stand pat in qsearch on pv nodes"
 2023-12-19	9be0360aa4	4928	closes	gain	other-functional	search	futility,probcut,qsearch	2	0.96	0.99				0.99	LTC		1	Adjust return value in qsearch after fail high
 2023-12-19	a069a1bbbf	4909	closes	untested	non-functional	docs,evaluate,nnue,search,threads,uci-io		0									7	Use std::abs over abs
-2023-12-19	07a2619b62	4923	closes	gain	speedup	search,time	time-management	3	2.52	2.76				2.76	LTC		2	Improvement of Time Management Parameters
+2023-12-19	07a2619b62	4923	closes	gain	non-functional	search,time	time-management	3	2.52	2.76				2.76	LTC		2	Improvement of Time Management Parameters
 2023-12-19	d9ec82e743	4922	closes	gain	other-functional	search	qsearch	3	1.0	1.77				1.77	LTC		1	Adjust stand pat in qsearch on pv nodes
 2023-12-14	c53d2ec253	4918	closes	untested	non-functional	uci-io		0									1	Remove UCI_AnalyseMode Option
 2023-12-14	536d692a30	4917	closes	untested	non-functional	time,uci-io	time-management	0									2	Remove SlowMover Option
@@ -1458,7 +1458,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2023-10-24	ec02714b62	4846	closes	nonreg	non-functional	evaluate,nnue,search,uci-io		1									8	Cleanup comments and some code reorg.
 2023-10-24	d6a5c2b085	4845	closes	untested	non-functional	movegen-position,nnue,search		0									5	Small formatting improvements
 2023-10-23	49ece9f791	4844	closes	untested	build-ci-docs	build-ci		0									1	Follow up Makefile changes for clang-format
-2023-10-23	cf3dbcb5ac	4843	closes	gain	speedup	search,time	time-management,tuning-spsa	2	2.5	1.25				1.25	LTC		2	Time management improvements
+2023-10-23	cf3dbcb5ac	4843	closes	gain	non-functional	search,time	time-management,tuning-spsa	2	2.5	1.25				1.25	LTC		2	Time management improvements
 2023-10-23	a105978bbd	4840	closes	untested	non-functional	evaluate,movegen-position,nnue,search,tablebases,threads,time,tt,uci-io		0									24	remove blank line between function and it's description
 2023-10-23	b187622233	4838	closes	untested	build-ci-docs	build-ci		0									1	use expanded variables for shell commands
 2023-10-23	40c6a84434	4830	closes	untested	non-functional	tablebases		0									1	Fix a compiler bug on Clang 15+ with AVX-512
@@ -1811,7 +1811,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2022-10-23	804394b939	4202	closes	untested	build-ci-docs	build-ci	speedup	0									1	enable bit manipulation instruction set 1
 2022-10-23	234d2156fd	4201	closes	nonreg	build-ci-docs	build-ci,docs		1									2	Apply -flto-partition=one / -flto=full
 2022-10-16	79c5f3a692	4187	closes	untested	non-functional	docs,tablebases	eval-scaling,tablebases	0									3	Fix tablebase probe for dtz >1000 w/o 50 move rule
-2022-10-16	9be2977da7	4188	closes	gain	speedup	time	time-management	4	1.44	0.91				0.91	LTC		1	Adjust timeman constants
+2022-10-16	9be2977da7	4188	closes	gain	non-functional	time	time-management	4	1.44	0.91				0.91	LTC		1	Adjust timeman constants
 2022-10-16	d6b6360ff5	4195	closes	gain	other-functional	evaluate	eval-scaling	2	1.47	1.63				1.63	LTC		1	Tweak the formula for NNUE complexity
 2022-10-16	f97a86e213	4196	closes	nonreg	simplification	search	razoring	2									1	Remove depth condition from razoring
 2022-10-16	93f71ecfe1	4199	closes	gain	speedup	build-ci,nnue	speedup	2	0.63					0.63	STC		4	Optimize make_index() using templates and lookup tables.
@@ -3117,7 +3117,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2018-03-03	94b3cdd908			untested	build-ci-docs	build-ci		0									1	Better indentation in Makefile
 2018-02-28	94abc2a0cf			gain	other-functional	search	qsearch,razoring	4	3.18	3.86				3.86	LTC		1	Reintroduce depth 2 razoring (with additional margin)
 2018-02-28	59d10374ca	1434	mention	gain	other-functional	eval-classical		2	4.49	2.08				2.08	LTC		1	Blocked pawn storm
-2018-02-28	ad5d86c771			gain	speedup	search,time,uci-io	speedup,time-management,tuning-spsa	4	4.38	1.86				1.86	LTC		3	Tweak time management
+2018-02-28	ad5d86c771			gain	non-functional	search,time,uci-io	speedup,time-management,tuning-spsa	4	4.38	1.86				1.86	LTC		3	Tweak time management
 2018-02-27	de642f16db			nonreg	non-functional	evaluate		2									1	Simplify tropism computation
 2018-02-27	cccbecb6f8			gain	other-functional	search	reductions-lmr	2	3.82	2.64				2.64	LTC		1	Stat score initialization: grandchildren
 2018-02-27	1463881153			gain	other-functional	search	reductions-lmr	2	3.92	2.23				2.23	LTC		1	Stat score initialization: children
@@ -4426,7 +4426,7 @@ date	sha	pr	pr_source	result	kind	areas	techniques	n_tests	elo_stc	elo_ltc	elo_v
 2013-09-15	d3947b2f3e			untested	non-functional	movegen-position		0									1	Nicer operator declerations
 2013-09-15	a71209868b			untested	non-functional	evaluate,movegen-position,search,time,tt,uci-io		0									11	Use pre-increment also for native types
 2013-09-15	7a1ff6d8ff			untested	non-functional	evaluate,movegen-position		0									4	Fix operator++ definition
-2013-09-15	82f6779c2e			gain	speedup	time		3	2.37					2.37	STC		1	Don't blunder under extreme time pressure
+2013-09-15	82f6779c2e			gain	non-functional	time		3	2.37					2.37	STC		1	Don't blunder under extreme time pressure
 2013-09-14	3abccdc82d			untested	non-functional	eval-classical		0									1	Move classify_leaf() to c'tor in bitbases
 2013-09-14	8d6d0223bf			untested	non-functional	eval-classical		0									1	Small touches to bitbase.cpp
 2013-09-13	fc17d0de77			gain	other-functional	evaluate		2	2.0	13.89				13.89	LTC		1	Increase passed bonus for having more pieces

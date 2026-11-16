@@ -422,9 +422,8 @@ def result_of(tests, subject):
     return "tested-not-passed" if tests else "untested"
 
 
-def kind_of(subject, body, files, date, result, pre):
-    """One primary kind per commit, first rule that fires wins. `pre` is the message text
-    before the first test result, code blocks removed."""
+def kind_of(subject, body, files, date, result, areas):
+    """One primary kind per commit, first rule that fires wins."""
     if RELEASE_RE.search(subject):
         return "release"
     if files and all(re.search(r"Makefile|\.github/|^tests/|CMake|\.travis|appveyor|scripts/|"
@@ -437,9 +436,13 @@ def kind_of(subject, body, files, date, result, pre):
         return "tuning"
     if SPEEDUP_RE.search(subject):
         return "speedup"
-    # A "No functional change" patch that passed a gainer SPRT can only have gained by
-    # running faster. Low-level optimisation words in the subject count too.
-    if NONFUNC_RE.search(body) and (result in ("gain", "mixed") or SPEEDUP_SUBJ_RE.search(subject)):
+    # Bench-neutral gain: "No functional change" means the bench node count is unchanged,
+    # so a passed gainer SPRT points to speed. Time management and multi-thread changes
+    # are bench-neutral too; the time area is excluded (e.g. ad5d86c7). Low-level
+    # optimisation words in the subject count too.
+    if NONFUNC_RE.search(body) and (
+            (result in ("gain", "mixed") and "time" not in areas)
+            or SPEEDUP_SUBJ_RE.search(subject)):
         return "speedup"
     if NONFUNC_RE.search(body) or (result == "untested" and NONFUNC_SUBJ_RE.search(subject)):
         return "non-functional"
@@ -520,7 +523,7 @@ def main():
         areas = {a for a, rx in AREA_RX for f in files if rx.search(f)}
         result = result_of(tests, subject)
         pre = re.split(r"LLR:|Total:", CODE_BLOCK_RE.sub(" ", body), maxsplit=1)[0][:800]
-        kind = kind_of(subject, body, files, date, result, pre)
+        kind = kind_of(subject, body, files, date, result, areas)
         if kind == "net-update":
             areas.add("nnue")
         if files and not areas:
@@ -616,8 +619,10 @@ def write_summary(rows, known_prs):
       "or an SFNNv architecture bump; from 2020-08 only) > tuning (spsa/tune) > speedup > "
       "non-functional (\"No functional change\" line) > simplification (simplify/remove/"
       "cleanup/refactor subject) > bugfix > other-functional. speedup also covers a \"No "
-      "functional change\" commit that passed a gainer SPRT (it can only gain by speed) or "
-      "whose subject says prefetch/unroll/hoist/vectorize/branchless.")
+      "functional change\" commit that passed a gainer SPRT (a bench-neutral gain, usually "
+      "speed; commits touching time management are left out because they are "
+      "bench-neutral without being faster) or whose subject says "
+      "prefetch/unroll/hoist/vectorize/branchless.")
     w("- **areas**: from files touched (one commit can have several). `evaluate` is "
       "src/evaluate.*: classical eval before 2020-08, NNUE glue after 2023-07, both in "
       "between. Net-update commits also get `nnue`.")
@@ -746,13 +751,14 @@ def write_summary(rows, known_prs):
     def commit_table(title, note, sel, key, label, n, extra=None):
         w(f"## {title}\n")
         w(note + "\n")
-        w(f"| date | commit | PR | kind | {label} | source | areas | subject |")
-        w("|---|---|---|---|---|---|---|---|")
+        src_h, src_sep = (" source |", "---|") if extra else ("", "")
+        w(f"| date | commit | PR | kind | {label} |{src_h} areas | subject |")
+        w("|---|---|---|---|---|" + src_sep + "---|---|")
         for r in sorted(sel, key=lambda r: -r[key])[:n]:
             pr = f"#{r['pr']}" if r["pr"] else ""
             subj = r["subject"][:70].replace("|", "/")
-            src = extra(r) if extra else ""
-            w(f"| {r['date']} | {r['sha'][:8]} | {pr} | {r['kind']} | {r[key]:.2f} | {src} | "
+            src = f" {extra(r)} |" if extra else ""
+            w(f"| {r['date']} | {r['sha'][:8]} | {pr} | {r['kind']} | {r[key]:.2f} |{src} "
               f"{','.join(r['areas'])} | {subj} |")
         w("")
 
@@ -766,7 +772,7 @@ def write_summary(rows, known_prs):
         "was SPRT-tested only for non-regression). Counts by source: "
         + ", ".join(f"{k} {v}" for k, v in src_counts.most_common())
         + ". Top 30 by best Elo; the source column gives the TC. Fixed-games Elo is "
-        "not selected by an SPRT, so it has no winner's-curse bias, but the run may compare "
+        "not selected by an SPRT, so it has no SPRT stopping bias, but the run may compare "
         "something other than the final patch.",
         nolt, "elo_best", "best Elo", 30,
         lambda r: r["elo_best_src"] + (f" @ {r['elo_fixed_tc']}" if r["elo_best_src"] == "fixed" else ""))
@@ -776,6 +782,13 @@ def write_summary(rows, known_prs):
         "tested at STC only. Top 20.",
         [r for r in rows if r["kind"] == "speedup" and r["result"] == "gain" and r["elo_stc"] is not None],
         "elo_stc", "STC Elo", 20)
+    commit_table(
+        "Largest multi-thread gains (SMP Elo)",
+        "Commits by SMP Elo: the first passed multi-thread gainer SPRT, else the first "
+        "multi-thread fixed-games run. These are left out of every other Elo column. "
+        "Thread counts and TCs differ between rows, so compare within the table only "
+        "loosely. Top 10.",
+        [r for r in rows if r["elo_smp"] is not None], "elo_smp", "SMP Elo", 10)
 
     w("## Largest measured single gains (LTC)\n")
     w("Top 40 gain commits by recomputed LTC Elo. Verify each before citing it.\n")

@@ -7,7 +7,7 @@ Per-commit table: [`data/stockfish-commits.tsv`](data/stockfish-commits.tsv). Pe
 ## Definitions
 
 - **result** (from SPRT lines in the message): *gain* = passed an SPRT with gainer bounds (midpoint of the Elo bounds > 0) at the longest single-thread TC tried; *mixed* = passed a gainer SPRT at a shorter TC but failed at the longest; *nonreg* = passed only non-regression bounds (midpoint <= 0, e.g. `<-1.75,0.25>`); *tested-not-passed* = results present but none passed (fixed-game runs, failed or stopped tests quoted for context); *untested* = no results in the message.
-- **kind** (from subject, body and files; first rule wins): release ("Stockfish 15", "Restore development version") > build-ci-docs (only non-source files) > net-update (subject names a net `nn-xxxx`, "update ... net", or an SFNNv architecture bump; from 2020-08 only) > tuning (spsa/tune) > speedup > non-functional ("No functional change" line) > simplification (simplify/remove/cleanup/refactor subject) > bugfix > other-functional. speedup also covers a "No functional change" commit that passed a gainer SPRT (it can only gain by speed) or whose subject says prefetch/unroll/hoist/vectorize/branchless.
+- **kind** (from subject, body and files; first rule wins): release ("Stockfish 15", "Restore development version") > build-ci-docs (only non-source files) > net-update (subject names a net `nn-xxxx`, "update ... net", or an SFNNv architecture bump; from 2020-08 only) > tuning (spsa/tune) > speedup > non-functional ("No functional change" line) > simplification (simplify/remove/cleanup/refactor subject) > bugfix > other-functional. speedup also covers a "No functional change" commit that passed a gainer SPRT (a bench-neutral gain, usually speed; commits touching time management are left out because they are bench-neutral without being faster) or whose subject says prefetch/unroll/hoist/vectorize/branchless.
 - **areas**: from files touched (one commit can have several). `evaluate` is src/evaluate.*: classical eval before 2020-08, NNUE glue after 2023-07, both in between. Net-update commits also get `nnue`.
 - **techniques**: keyword tags on the subject and the text before the first test result. NNUE tags only from 2020-08-06. Heuristic; see Accuracy below.
 - **LTC Elo**: logistic Elo recomputed from W/L/D of the first passed gainer LTC test (single-thread only, default configuration: tests labelled MultiPV, Skill, Chess960/FRC, contempt, ponder or MAX_PLY, and commits whose subject names MultiPV, Skill, Chess960/FRC or ponder, are left out). Not the SPRT bound and not fishtest's normalized Elo.
@@ -17,7 +17,7 @@ Per-commit table: [`data/stockfish-commits.tsv`](data/stockfish-commits.tsv). Pe
 
 - Non-merge commits: 7297; with at least one parsed test: 2503; tests parsed: 4950 (4744 SPRT, 206 fixed-games).
 - By result: untested 4794, gain 1254, nonreg 1158, tested-not-passed 80, mixed 11
-- By kind: non-functional 3247, other-functional 1933, simplification 750, build-ci-docs 463, speedup 316, bugfix 251, tuning 140, net-update 113, release 84
+- By kind: non-functional 3255, other-functional 1933, simplification 750, build-ci-docs 463, speedup 308, bugfix 251, tuning 140, net-update 113, release 84
 
 ## Field coverage
 
@@ -46,30 +46,30 @@ SPRT bounds by Elo model: normalized 2543, BayesElo 1571, logistic 566, none pri
 | 2010 | 680 | 0 | 0 | 0 | 0 | 4 | 397 | 0 | - |
 | 2011 | 532 | 0 | 0 | 0 | 0 | 2 | 402 | 0 | - |
 | 2012 | 418 | 0 | 0 | 0 | 0 | 0 | 302 | 0 | - |
-| 2013 | 461 | 101 | 58 | 3 | 0 | 5 | 253 | 56 | 4.00 |
+| 2013 | 461 | 101 | 58 | 3 | 0 | 5 | 254 | 56 | 4.00 |
 | 2014 | 393 | 93 | 45 | 36 | 0 | 4 | 237 | 43 | 3.21 |
 | 2015 | 293 | 101 | 52 | 37 | 0 | 14 | 164 | 50 | 3.27 |
 | 2016 | 226 | 104 | 47 | 55 | 0 | 7 | 91 | 44 | 2.33 |
 | 2017 | 221 | 100 | 43 | 56 | 0 | 3 | 100 | 42 | 2.03 |
-| 2018 | 326 | 211 | 98 | 111 | 0 | 15 | 110 | 91 | 2.85 |
+| 2018 | 326 | 211 | 98 | 111 | 0 | 15 | 111 | 91 | 2.85 |
 | 2019 | 255 | 185 | 83 | 98 | 0 | 8 | 76 | 74 | 1.96 |
 | 2020 | 369 | 251 | 161 | 89 | 13 | 14 | 97 | 151 | 1.85 |
 | 2021 | 290 | 201 | 119 | 78 | 31 | 11 | 66 | 107 | 1.68 |
-| 2022 | 171 | 100 | 61 | 38 | 6 | 12 | 38 | 54 | 1.67 |
-| 2023 | 369 | 204 | 95 | 106 | 19 | 8 | 133 | 76 | 1.60 |
+| 2022 | 171 | 100 | 61 | 38 | 6 | 12 | 39 | 54 | 1.67 |
+| 2023 | 369 | 204 | 95 | 106 | 19 | 8 | 135 | 76 | 1.60 |
 | 2024 | 495 | 319 | 147 | 171 | 14 | 20 | 151 | 112 | 1.46 |
-| 2025 | 450 | 309 | 130 | 175 | 4 | 9 | 129 | 89 | 1.39 |
-| 2026 | 447 | 224 | 115 | 105 | 26 | 4 | 212 | 44 | 1.64 |
+| 2025 | 450 | 309 | 130 | 175 | 4 | 9 | 130 | 89 | 1.39 |
+| 2026 | 447 | 224 | 115 | 105 | 26 | 4 | 214 | 44 | 1.64 |
 
 ## Kind by result (gainers vs simplifications)
 
 | kind | gain | mixed | nonreg | tested-not-passed | untested | total |
 |---|---|---|---|---|---|---|
-| non-functional | 0 | 0 | 279 | 24 | 2944 | 3247 |
+| non-functional | 8 | 0 | 279 | 24 | 2944 | 3255 |
 | other-functional | 843 | 4 | 208 | 36 | 842 | 1933 |
 | simplification | 23 | 0 | 614 | 11 | 102 | 750 |
 | build-ci-docs | 3 | 0 | 2 | 1 | 457 | 463 |
-| speedup | 148 | 5 | 15 | 0 | 148 | 316 |
+| speedup | 140 | 5 | 15 | 0 | 148 | 308 |
 | bugfix | 9 | 0 | 35 | 7 | 200 | 251 |
 | tuning | 123 | 1 | 1 | 1 | 14 | 140 |
 | net-update | 105 | 1 | 4 | 0 | 3 | 113 |
@@ -132,11 +132,11 @@ Same columns. Tags overlap heavily (one commit often gets 3-5).
 
 | kind | gain commits | with LTC Elo | median LTC Elo | summed LTC Elo | with STC Elo | median STC Elo | summed STC Elo |
 |---|---|---|---|---|---|---|---|
-| non-functional | 0 | 0 | - | 0.0 | 0 | - | 0.0 |
+| non-functional | 8 | 5 | 1.25 | 7.9 | 8 | 1.91 | 15.9 |
 | other-functional | 843 | 804 | 1.92 | 1993.2 | 753 | 2.17 | 2078.8 |
 | simplification | 23 | 14 | 1.71 | 26.7 | 20 | 1.50 | 39.1 |
 | build-ci-docs | 3 | 0 | - | 0.0 | 3 | 3.05 | 7.1 |
-| speedup | 148 | 22 | 2.15 | 47.6 | 113 | 1.46 | 246.1 |
+| speedup | 140 | 17 | 2.30 | 39.7 | 105 | 1.46 | 230.3 |
 | bugfix | 9 | 3 | 3.63 | 13.4 | 4 | 2.25 | 13.2 |
 | tuning | 123 | 90 | 2.15 | 237.8 | 69 | 2.33 | 190.7 |
 | net-update | 105 | 100 | 2.00 | 232.4 | 95 | 2.12 | 237.3 |
@@ -144,7 +144,7 @@ Same columns. Tags overlap heavily (one commit often gets 3-5).
 
 ## Largest gains without an LTC Elo
 
-Commits the LTC tables miss: gains measured only at VLTC/VVLTC or STC, and commits with no gainer SPRT whose fixed-games run shows the effect (e.g. adding NNUE, which was SPRT-tested only for non-regression). Counts by source: STC 111, fixed 47, VVLTC 39, VLTC 18. Top 30 by best Elo; the source column gives the TC. Fixed-games Elo is not selected by an SPRT, so it has no winner's-curse bias, but the run may compare something other than the final patch.
+Commits the LTC tables miss: gains measured only at VLTC/VVLTC or STC, and commits with no gainer SPRT whose fixed-games run shows the effect (e.g. adding NNUE, which was SPRT-tested only for non-regression). Counts by source: STC 111, fixed 47, VVLTC 39, VLTC 18. Top 30 by best Elo; the source column gives the TC. Fixed-games Elo is not selected by an SPRT, so it has no SPRT stopping bias, but the run may compare something other than the final patch.
 
 | date | commit | PR | kind | best Elo | source | areas | subject |
 |---|---|---|---|---|---|---|---|
@@ -183,28 +183,45 @@ Commits the LTC tables miss: gains measured only at VLTC/VVLTC or STC, and commi
 
 Gain commits of kind speedup, by Elo of the passed STC SPRT. Speedups are usually tested at STC only. Top 20.
 
-| date | commit | PR | kind | STC Elo | source | areas | subject |
-|---|---|---|---|---|---|---|---|
-| 2020-09-17 | 8b8a510f | #3130 | speedup | 10.41 |  | nnue | Use tiling to speed up accumulator refreshes and updates |
-| 2023-06-12 | 38e61663 | #4612 | speedup | 10.04 |  | docs,evaluate,nnue | Use block sparse input for the first layer. |
-| 2013-08-26 | e6482b7d |  | speedup | 7.66 |  | search,time,uci-io | Time management: move faster if PV is stable |
-| 2026-05-19 | 90890c5f | #6832 | speedup | 6.90 |  | movegen-position,nnue | Loongarch opts |
-| 2026-08-02 | d077f9a8 | #7016 | speedup | 6.80 |  | build-ci | Port Linux shared memory to BSDs and macOS |
-| 2014-10-02 | 82d065b0 | #61 | speedup | 6.05 |  | movegen-position,search | Speculative prefetch |
-| 2020-10-22 | 2046d5da | #3193 | speedup | 5.12 |  | movegen-position,nnue | More incremental accumulator updates |
-| 2026-05-19 | fff35786 | #6814 | speedup | 4.58 |  | build-ci,nnue | Use bitset representation for nnz and move computation into feature tr |
-| 2026-06-10 | 7c7fe322 | #6890 | speedup | 4.57 |  | nnue | Merge HalfKA and Threats accumulators |
-| 2026-10-17 | e08dfa80 | #7225 | speedup | 4.50 |  | nnue | Pair int8 weight rows in accumulator updates |
-| 2018-02-28 | ad5d86c7 |  | speedup | 4.38 |  | search,time,uci-io | Tweak time management |
-| 2025-11-13 | 3ae76847 | #6415 | speedup | 4.30 |  | movegen-position,nnue | Improve Threats Speed |
-| 2018-07-27 | c9f80660 | #1709 | speedup | 4.13 |  | evaluate | Small reformat in evaluate threats (non functional) |
-| 2020-09-21 | 485d517c | #3081 | speedup | 3.92 |  | docs,nnue,tt,uci-io | Add large page support for NNUE weights and simplify TT mem management |
-| 2014-02-08 | d48a3042 |  | speedup | 3.83 |  | search | Inline common path of pos.gives_check |
-| 2013-12-19 | 26689d8c |  | speedup | 3.75 |  | evaluate | Faster and simplified threat eval |
-| 2021-05-22 | f233ca1a | #3488 | speedup | 3.62 |  | movegen-position | Compact position structures |
-| 2019-06-20 | 297c4029 | #2194 | speedup | 3.45 |  | search | QuietPick Speed-up |
-| 2026-05-25 | 77a8f6cc | #6845 | speedup | 3.43 |  | uci-io | HQ attacks for AVX2 |
-| 2025-09-02 | adfddd2c | #6284 | speedup | 3.31 |  | search | Add scaling note to STC/LTC tunes |
+| date | commit | PR | kind | STC Elo | areas | subject |
+|---|---|---|---|---|---|---|
+| 2020-09-17 | 8b8a510f | #3130 | speedup | 10.41 | nnue | Use tiling to speed up accumulator refreshes and updates |
+| 2023-06-12 | 38e61663 | #4612 | speedup | 10.04 | docs,evaluate,nnue | Use block sparse input for the first layer. |
+| 2013-08-26 | e6482b7d |  | speedup | 7.66 | search,time,uci-io | Time management: move faster if PV is stable |
+| 2026-05-19 | 90890c5f | #6832 | speedup | 6.90 | movegen-position,nnue | Loongarch opts |
+| 2026-08-02 | d077f9a8 | #7016 | speedup | 6.80 | build-ci | Port Linux shared memory to BSDs and macOS |
+| 2014-10-02 | 82d065b0 | #61 | speedup | 6.05 | movegen-position,search | Speculative prefetch |
+| 2020-10-22 | 2046d5da | #3193 | speedup | 5.12 | movegen-position,nnue | More incremental accumulator updates |
+| 2026-05-19 | fff35786 | #6814 | speedup | 4.58 | build-ci,nnue | Use bitset representation for nnz and move computation into feature tr |
+| 2026-06-10 | 7c7fe322 | #6890 | speedup | 4.57 | nnue | Merge HalfKA and Threats accumulators |
+| 2026-10-17 | e08dfa80 | #7225 | speedup | 4.50 | nnue | Pair int8 weight rows in accumulator updates |
+| 2025-11-13 | 3ae76847 | #6415 | speedup | 4.30 | movegen-position,nnue | Improve Threats Speed |
+| 2018-07-27 | c9f80660 | #1709 | speedup | 4.13 | evaluate | Small reformat in evaluate threats (non functional) |
+| 2020-09-21 | 485d517c | #3081 | speedup | 3.92 | docs,nnue,tt,uci-io | Add large page support for NNUE weights and simplify TT mem management |
+| 2014-02-08 | d48a3042 |  | speedup | 3.83 | search | Inline common path of pos.gives_check |
+| 2013-12-19 | 26689d8c |  | speedup | 3.75 | evaluate | Faster and simplified threat eval |
+| 2021-05-22 | f233ca1a | #3488 | speedup | 3.62 | movegen-position | Compact position structures |
+| 2019-06-20 | 297c4029 | #2194 | speedup | 3.45 | search | QuietPick Speed-up |
+| 2026-05-25 | 77a8f6cc | #6845 | speedup | 3.43 | uci-io | HQ attacks for AVX2 |
+| 2025-09-02 | adfddd2c | #6284 | speedup | 3.31 | search | Add scaling note to STC/LTC tunes |
+| 2021-01-08 | 23c385ec | #3287 | speedup | 3.17 | nnue | Affine transform refactoring. |
+
+## Largest multi-thread gains (SMP Elo)
+
+Commits by SMP Elo: the first passed multi-thread gainer SPRT, else the first multi-thread fixed-games run. These are left out of every other Elo column. Thread counts and TCs differ between rows, so compare within the table only loosely. Top 10.
+
+| date | commit | PR | kind | SMP Elo | areas | subject |
+|---|---|---|---|---|---|---|
+| 2020-08-06 | 84f3e867 | #2912 | other-functional | 89.47 | build-ci,docs,eval-classical,evaluate,movegen-position,nnue,search,tablebases,threads,time,tt,uci-io | Add NNUE evaluation |
+| 2015-10-20 | ecc5ff66 |  | other-functional | 44.75 | search,threads,time,uci-io | Lazy SMP |
+| 2018-03-30 | c8ef80f4 | #1515 | other-functional | 17.99 | evaluate,search,threads | Use per-thread dynamic contempt |
+| 2015-04-09 | 2ca142a5 | #324 | other-functional | 14.87 | threads | Use minimumSplitDepth = 5 |
+| 2023-02-24 | 472e726b | #4406 | tuning | 11.99 | search | Search tuning at very long time control |
+| 2015-12-18 | 38adb487 | #525 | other-functional | 8.42 | search | Distinct iteration paths for Lazy SMP threads |
+| 2015-03-12 | 13c11f40 | #282 | other-functional | 7.26 | search | Introduce Counter Move History tables |
+| 2025-11-22 | d9fd5165 | #6444 | tuning | 7.20 | evaluate,search | Post-NNUEv10 tune |
+| 2016-01-24 | 9a10313a | #574 | other-functional | 7.18 | search | rotating symmetric patterns with increasing skipsize |
+| 2025-12-28 | 969285fa | #6498 | other-functional | 6.28 | movegen-position,search | Shared pawn history |
 
 ## Largest measured single gains (LTC)
 
@@ -349,16 +366,27 @@ quotes a test result, so "untested" there means "no data", not "not tested".
   and its gain appears only in a fixed-games run (+92.8 Elo at 10+0.1, one thread). That
   is why the "best Elo" columns and the "Largest gains without an LTC Elo" table exist.
   Lazy SMP (ecc5ff6693) has only multi-thread results (+44.8 at 20 threads, fixed games);
-  it is in the TSV's `elo_smp` column and in no ranking.
+  it appears only in the "Largest multi-thread gains (SMP Elo)" table and the TSV's
+  `elo_smp` column.
 - **Fixed-games fallback errors.** Runs against an older engine or before/after pairs
   are skipped when the label or the three lines above say so ("against SF 7", "With
   patch applied", "Before"). Some still get through: 1c50d8cb (+9.2, a thread-binding
   change, probably a multi-thread run) and comment-only commits that quote a run about
   the idea they document (6db47ed7, d2345485). Check the source column before citing.
-- **Speedup kind.** A commit is a speedup if its subject says so, if it has a "No
-  functional change" line and passed a gainer SPRT, or if its subject says
-  prefetch/unroll/hoist/vectorize/branchless. Speedups whose message says none of these
-  are still filed as non-functional.
+- **Speedup kind.** A commit is a speedup if its subject says so, if its subject says
+  prefetch/unroll/hoist/vectorize/branchless, or if it has a "No functional change" line
+  and passed a gainer SPRT. That last rule infers speed from a bench-neutral gain: "No
+  functional change" means the bench node count is unchanged, not that the gain came from
+  speed. Time management, multi-thread and comment-only changes are bench-neutral too
+  (ad5d86c7 says so). Commits touching time management are excluded from the rule;
+  multi-thread and comment-only ones are not, so some of them are still filed as
+  speedups. Speedups whose message gives none of these signs are filed as non-functional.
+- **Listed, not fixed:**
+  - About 25 speedups have a single test whose TC was not detected (e.g. 4150d22b), so
+    they have no STC Elo and are missing from the speedup table.
+  - `elo_vltc` holds the VVLTC result when a commit has no VLTC result.
+  - 77b5ee01's fixed-games run is labelled STC, but it ran at 5+0.05 ("super blitz"),
+    which is shorter than STC.
 - **Areas come from file paths.** `evaluate` mixes classical eval (before 2020-08), the
   hybrid era (2020-08 to 2023-07) and NNUE glue code (after af110e02 "Remove classical
   evaluation", 2023-07-11). Net updates change only `src/evaluate.h`; they are tagged
@@ -417,8 +445,12 @@ These are readings of the tables above, not measured facts.
   such as extensions (59, 131.8) come after that. Summed Elo is only a ranking signal
   (see above). The ranking also leaves out the biggest single step: adding NNUE
   (84f3e867, about +93 in a fixed-games run, no gainer SPRT).
-- Speedups are mostly tested at STC only: 113 speedup gain commits have STC Elo
-  (median 1.5, summed 246.1), but only 22 have LTC Elo. The largest are NNUE inference
+- Ranked by summed best Elo instead, nnue-net (370.7) and speedup (291.4) are in the top
+  five technique tags: nnue-net rises from 4th to 2nd and speedup enters at 5th, behind
+  tuning (516.7), reductions/LMR (327.4) and history (291.8). Best Elo mixes time
+  controls, so this shows what the LTC ranking misses rather than a better ranking.
+- Speedups are mostly tested at STC only: 105 speedup gain commits have STC Elo
+  (median 1.5, summed 230.3), but only 17 have LTC Elo. The largest are NNUE inference
   work (accumulator tiling 8b8a510f, +10.4 STC; block-sparse first layer 38e61663,
   +10.0 STC).
 
