@@ -145,6 +145,20 @@ The approved stage-1 plan is [plans/stage1-plan.md](plans/stage1-plan.md).
   Inference: bot-vs-bot games rarely involve phonies, so the challenge rule should
   seldom change results.
 
+## Findings shaping stage 2
+
+From the [MAGPIE dossier](engines/magpie.md):
+
+- **(a) Leave tables look saturated.** Six retraining rounds of BestBot's leaves gave 50.0% → 50.4% head-to-head
+  ([Woogles, 2025-06-02](https://blog.woogles.io/posts/2025-06-02-new-leaves)). MAGPIE's contextual,
+  pool-aware leaves (jvc56/MAGPIE#630) gave about +1 Elo. Gains have to come from evaluation that sees the
+  board and bag, most likely a value net at the playout leaf.
+- **(b) The target will move.** The MAGPIE authors are already testing a GPU value net in rollouts
+  (jvc56/MAGPIE#920, branch `vn-nnue-m5`). Our edge has to come from doing it better or faster: a
+  CPU-efficient incremental net, or better training data.
+
+Contacting the MAGPIE authors is the owner's call; nothing has been sent.
+
 ## Suggested order
 
 Follows the approved [stage-1 plan](plans/stage1-plan.md): harness first. Step 2a (reuse
