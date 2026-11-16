@@ -449,6 +449,7 @@ Only what explains the three deep parts. Full PR list in `reference/history/magp
   - Branch `vn-nnue-m5` (not in main; mentioned only in #920's description): a "cached value net" with
     attention layers (MPSGraph on an Apple M5 Max GPU), used "on both rollout plies". In `simbench` (2 plies,
     15 root plays, 16 threads) the GPU was 91–96% busy and limited throughput. No strength result is given.
+    The branch is not on GitHub; the pushed value-net branches are covered in "Value-net branches (not on main)".
 
 **Leaves.** Leave map (#12 `9abda55b`, 2023); self-play leavegen (#240, 2024-08) with forced rare racks
 (#244); rack-based leavegen (#299, 2025-04) weighted by draw probability (#310, 2025-05); census, census play
@@ -519,8 +520,8 @@ compatible with Macondo tooling.
    play, 0.83× sim throughput, and no measurable sim gain from using it in rollouts.
 3. **E3, policy/value net in rollouts:** possible as a re-rank of the top-k static moves, but the generator's
    pruning relies on cheap upper bounds (src/ent/static_eval.h:116-125), so per-move board-aware terms break
-   best-only generation unless they come with a bound. The `vn-nnue-m5` branch did this on a GPU and was
-   GPU-bound (#920).
+   best-only generation unless they come with a bound. `claude/value-net-pat` did this on a GPU (rollouts
+   165–460× slower, no gain at equal iterations) and `vn-nnue-m5` was GPU-bound (#920); see "Value-net branches".
 4. **E2 inside all movegen:** hardest, for the same bound reason and because it runs on every generated move.
 
 **Budget per evaluation inside simulation** (from the project's numbers above, not measured by us; hardware
@@ -553,6 +554,147 @@ From those numbers:
   policy or a board-aware equity inside move generation is a research project, because MAGPIE's speed rests
   on bound-based pruning that assumes leave-only evaluation.
 
+## Value-net branches (not on main)
+
+**Access.** The sandbox blocks `git -C` on `reference/magpie`, and that clone is blobless (`partialclonefilter =
+blob:none`), so branch files were not readable there. Branch files were read from a fresh blobless clone of
+github.com/jvc56/MAGPIE (2026-11-16). Its branch tips match the reference clone's `refs/remotes/origin/*`. Files
+are cited as `<tip SHA> path:line`, commit messages by short SHA. All runs below are by the branch author on Apple
+M4 or M5 Max machines, NWL23, and were not reproduced by us.
+
+**Branches.** Remote branch names and the subjects of unmerged commits were searched for
+net/nnue/value/vn/nn/onnx/metal/simd/gpu:
+
+| Branch | Tip, last commit | Merge base with `b781018` | Ahead / behind | What |
+| --- | --- | --- | --- | --- |
+| `claude/value-net-pat` | `ad85baba`, 2026-10-05 | `375ad953` (2026-09-30, #743) | 84 / 511 | the value-net work plus PAT |
+| `claude/value-net` | `3db7d73a`, 2026-10-04 | `375ad953` | 26 / 511 | an earlier fork: distillation tools and the opponent-leave head |
+| `claude/peg-nets-main` | `2c04e4c8`, 2026-11-02 | `87db7f89` (2026-10-31, #924) | 44 / 176 | small 1PEG/2PEG nets in late-game sims |
+| `gpu-profile-skill` | `1b78f415`, 2026-10-31 | — | — | #920's Metal profiling skill (tooling only) |
+| `vn-nnue-m5` | **not on GitHub** | — | — | named only in #920's description; absent from both clones' refs |
+
+The other matches have no net in them: `outcome-model-*` (#524–#528, linear, covered above), `perf-simd-wordmap`
+(#416), `wasm-simd-optimizations`, `gpu-wmpg-poc` (a GPU movegen proof of concept, last commit `3e33e4eb` "Remove
+brute-force GPU code path"), and the PAT and PEG-outcome branches.
+
+**Architecture** (`ad85baba` models/macondo-nn-tf-nwl23s-v1/README.md:41-90):
+- The net is **Macondo's transformer**, not a MAGPIE design. It was handed over by Macondo's author, and its source
+  is given as domino14/macondo branch `claude/transformer-valuenet` (README.md:28). That branch is not on GitHub
+  (`git ls-remote`, 2026-11-16), but Macondo's main now has the training code and nets (see
+  [macondo.md](macondo.md), "Value net").
+- Size: 3,665,355 parameters.
+- Input: the position after a candidate move, seen from the mover's side. 85 binary 15×15 planes (letters, blank,
+  cross-checks in both directions, premium squares, tiles just placed, the opponent's last play), plus 72 scalars
+  (leave, unseen tiles, the opponent's last move, the KLV leave value, candidate score, bag size, spread). It never
+  sees the opponent's rack.
+- Body: 254 tokens of width 192 (cls, 225 squares, 27 tile types, 1 game token); 8 pre-norm blocks with 6 heads.
+- Heads: WDL (value = P(win) − P(loss)) and spread, plus auxiliary heads.
+- Features are rebuilt from scratch for every candidate (`ad85baba` src/impl/value_net_features.c:176-182); there is
+  no incremental update.
+- Distilled students keep the format: 6 blocks with an opponent-leave head (`models/student-t6-so-rack`, 2,822,367
+  floats, manifest.json:2-10), or 4 blocks.
+
+**Where it is called:**
+- One-ply player: the FastMlBot-style player scores the static top 50 moves (`eb0743ad`, `5f094329`).
+- Rollout policy: the net picks among the top K static replies on rollout ply 1, then on any number of plies
+  (`7f1a1780`, `3c2bf5f7`; `rollout_value_net_plies`, src/ent/sim_args.h:106-125).
+- Sim leaf: the net scores the final rollout ply over static plies (`996af2f1`; `rollout_value_net_leaf`). A
+  control-variate version calls the net on every m-th iteration only (`37a18a6e`; `rollout_value_net_leaf_every`,
+  sim_args.h:127-133).
+- Candidates: the net picks the sim's candidates (`249da8e0`) and gives them a prior worth n iterations
+  (`dc62bcfd`; src/impl/play_chooser.h:52-62).
+- Inference: the net acts as the opponent's policy for leaves of 1–2 tiles (`02d0a3af`, `105b6d48`;
+  play_chooser.h:89-95), and an opponent-leave head draws the opponent's rack (`530ddc53`).
+- Late game: separate small nets choose plays at 1–2 tiles in the bag inside 7-in-bag sims (`peg-nets-main`).
+
+**Hardware and forward-pass cost:**
+
+| Path | Rate | Source |
+| --- | --- | --- |
+| CPU, plain C fp32, teacher | 71 ms per row, one core | `c4f4244b` |
+| CPU, NEON fp16 SIMD, teacher | 16 ms per row, one M5 core; 693 rows/s on 18 threads | `81e56760` |
+| Metal fp16, teacher, M5 Max | ~12,900 rows/s (one caller), 15,500–15,800 (two or more) | `27499af6` |
+| Metal fp16, 4-block student vs teacher | 29,600 vs 15,900 rows/s | `bd3ab833` |
+| Neural Engine | ~2,250 rows/s on an M4 (teacher); ~4,800 (student, M5 Max) | REPORT.md:23; `bd3ab833` |
+| int8 Neural Engine build | no faster (W8); A8 falls back to CPU and loses the gain | `a5916ca9` |
+
+Sim throughput:
+- 4-ply sims, 10 threads, M4: static ~60,000 it/s; with net replies on ply 1 at K = 8, 130 (Metal) / 275 (Neural
+  Engine) / 363 (both) (`ad85baba` notes/value-net-20261002/REPORT.md:32).
+- Net leaf over static plies, M5 Max, 18 threads, 4 plies, 5 s per move: 121,000 iterations per move against
+  296,000 for the static sim; 2-ply all-net rollouts reach ~6,300 (`996af2f1`).
+- Control-variate leaf with m = 4: 21,000 it/s against 11,300 for m = 1. The net and table horizon utilities
+  "correlate 0.964 (sd 0.128 and 0.127, sd of the difference 0.034)" (`37a18a6e`).
+- PEG nets: the endgame search is about 87% of the CPU time and the nets about 13% (`2c04e4c8`
+  notes/pegsim-late-game-20261101/REPORT.md:94).
+
+**Training data and recipe:**
+- Teacher (Macondo's; PyTorch): `nwl23s` at step 51,000 (nwl23s README.md:27). `streamopen` "trained twice as
+  long (~100k steps) on 54M sampled-openings games" (`ad85baba` models/macondo-nn-tf-streamopen-v1/README.md:3-9).
+  The WDL head is trained on the mover's final result. Who played those games is not stated here; Macondo's
+  larger nets used HastyBot self-play ([macondo.md](macondo.md), "Value net").
+- Students (in MAGPIE; MLX on a Mac): teacher self-play, about 1,000 records per game, one per top-50 candidate.
+  Softmax exploration while the bag holds more than 60 tiles, 5% after. The pilot had 10,000 games and 10.4M
+  records.
+- Student loss: squared error on the value, on the value centred within each decision, and on the spread. A
+  listwise KL term and top-k sampling did not help (tools/value_net/distill/README.md:33-46).
+
+**Measured strength (every number found):**
+
+| Test | Result | Source |
+| --- | --- | --- |
+| Teacher as a one-ply player vs MAGPIE static, 1,000 pairs, value only | **55.85% ± 0.88%**, spread −1.4 ± 1.8 | REPORT.md:14 |
+| Same, ranked by MAGPIE's win+spread utility | **56.83% ± 0.90**, spread +10.9 ± 1.5 | `5f094329` |
+| 4-block student vs static / vs teacher, 1,000 pairs | 52.98% ± 0.92 / 46.32% ± 0.85 | `bd3ab833` |
+| Student + teacher rescoring its top 5, vs teacher | 48.95% ± 0.56 at 1.49× speed | distill/README.md:85 |
+| Macondo's own figures for its teacher (not MAGPIE's) | 57.65% vs HastyBot (100,000 pairs); 49.0% ± 1.6 vs "a 2-ply Monte Carlo sim of 100 candidates" | streamopen README.md:3-9 |
+| **A1: 4-ply sim with net replies on rollout ply 1 vs static rollouts, equal iterations (200), 300 pairs** | **50.67% ± 1.85% (p = 0.72)**, spread +6.4 ± 3.3; 11.2 s vs 32 ms per decision | REPORT.md:34-36 |
+| PEG nets + 2-ply endgame in 7-in-bag rollouts vs static sim, equal time, judged with a playout policy that uses the same nets | +0.63 win% [+0.26, +1.04] | peg-nets REPORT.md:15-17 |
+| Same picks, later turns played by static sims | **−0.12 win% [−0.37, +0.16]** | peg-nets REPORT.md:30-32 |
+| Static sim with ~500× the rollouts vs static (7 in the bag) | +0.13 win% [−0.08, +0.32] | peg-nets REPORT.md:21-22 |
+| `vn-nnue-m5` cached net on both rollout plies | throughput only (GPU 91–96% busy) | #920 |
+
+No game result was found, in commits, notes, PRs or issues, for:
+- the net leaf (`996af2f1`) or its control-variate version (`37a18a6e`);
+- net-chosen candidates or the net prior;
+- net-based inference or the opponent-leave head;
+- any net-in-sim player at **equal time**.
+
+### Inference
+
+- **What MAGPIE has shown:**
+  - A 3.7M-parameter transformer picks better single moves than static equity: +5.9 to +6.8 points of win rate
+    over 1,000 pairs.
+  - It runs at GPU or Neural Engine rates only on Apple hardware.
+  - Macondo reports that the same net plays level with a 2-ply sim of 100 candidates.
+- **What MAGPIE has not shown:**
+  - Any gain from a net inside the sim. The one in-sim test (A1) was flat at equal iterations, while costing about
+    350× the time per decision.
+  - The leaf-net and candidate modes were built and benchmarked but never played.
+  - The late-game nets help only when the later turns are played by the same nets, so the gain partly reflects the
+    judge.
+- **The net leaf may change little.** It agrees with the win% table at 0.964 correlation on 4-ply horizons, so a
+  leaf net has to win from a residual with sd 0.034. Together with "static sims saturate" at 7 in the bag, this
+  fits the dossier's view that leaf bias limits the sim, but it also says the bias is small at a 4-ply horizon.
+- **The cost is far outside a CPU budget.** At 16 ms per row on a CPU core, the teacher is about 4,000× our
+  ~4 µs leaf budget. MAGPIE's answer was Apple accelerators plus distillation, not a smaller or incremental net.
+  The only small net from scratch (128 wide, 4 layers) "stayed at static's regret after 3,000 steps", which is a
+  very short run, not evidence that small nets fail.
+- **What is left open for us:**
+  - A CPU-cheap, incrementally updated leaf net (NNUE-style, a few µs, trained for the leaf state), played at
+    equal time in game pairs.
+  - Labels from sim-backed or deeper outcomes, rather than distilling Macondo's one-ply net.
+  - Where in the search to use it: at the leaf, possibly with the control variate (their measured optimum m = 4–6,
+    about 1.5× effective samples), rather than as a rollout policy.
+- **What not to repeat:**
+  - Equal-iteration comparisons.
+  - Net-chosen rollout plies (two orders of magnitude slower, no gain).
+  - int8 Neural Engine builds.
+  - Listwise losses for distillation.
+  - Judging picks with a playout policy that shares the candidate's own policy.
+- `vn-nnue-m5` is unpublished. Its #920 kernels (`gemm`, `sdpa` attention) suggest it is the same transformer
+  family behind a cache, not an NNUE. This is UNVERIFIED until the branch appears.
+
 ## Inference
 
 - MAGPIE has moved from "Macondo in C" to the reference open engine for search technique. Its developers
@@ -584,7 +726,8 @@ The fork hypothesis stands on strength and features. It must be weighed against 
 **2. Where a neural evaluation pays off.** First at the sim leaf (E4): today that is a table lookup on spread and
 three tile counts, so it ignores the board, the racks and positional factors, and the sim's statistics are
 already strong enough that leaf bias, not noise, is the likely limit. Second, as a rollout policy (E3). The
-project itself is exploring both (#527, `vn-nnue-m5`) without published strength results. Leaves alone look
+project has built both on branches (#527, `claude/value-net-pat`, `vn-nnue-m5`); its only in-sim test was flat at
+equal iterations and none was run at equal time (see "Value-net branches"). Leaves alone look
 saturated: six generations gave 50.0% → 50.4%, and #630's pool-aware leaves about +1.1 Elo at 0.83× sim
 throughput. PEG and endgame are exact or nearly exact searches where a net helps only the greedy leaf
 playouts.
@@ -609,8 +752,11 @@ contribute protocol is a candidate for distributed testing.
   the self-play table it was blended with are not stated. (Check the MAGPIE-DATA repo.)
 - What strength does each default add? No single table of autoplay results per feature (inference, bag cycle,
   PAT, uspread, census) was found. Collect them from PR descriptions, or measure.
-- Did the `vn-nnue-m5` value net or the #527 OutcomeModel gain strength? The answer is not in the repo or in
-  PR descriptions.
+- Does any net inside the sim (leaf `996af2f1`, control-variate leaf `37a18a6e`, net candidates `249da8e0`) gain
+  strength at equal time? Only an equal-iteration test of net rollout replies exists (50.67% ± 1.85%). Nor is
+  there a result for `vn-nnue-m5` (not on GitHub) or the #527 OutcomeModel.
+- Which games trained the `streamopen` teacher (54M "sampled-openings games")? Check Macondo's
+  `pytorch/experiments.md`.
 - Is PEG's default opponent model pessimistic (src/impl/config.c:16977, README) or rational
   (src/impl/peg.h:67-68)? Confirm by running it.
 - What is MAGPIE's actual speed on our machine (6 cores, Linux): movegen/s, rollouts/s at 2 and 5 plies with
