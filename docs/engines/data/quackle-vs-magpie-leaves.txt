@@ -1,0 +1,26 @@
+## reference/quackle/data/strategy/csw/superleaves vs data/magpie/data/lexica/CSW24.klv2
+cf20c38578cfd6263d494e2748cf96b4028e3e9ff77812a5e4efc082c4ab3797  reference/quackle/data/strategy/csw/superleaves
+1937df3fd5dc1882e6c283bdc0c8870ecf25b38645cb214fd4802d302ad34dea  data/magpie/data/lexica/CSW24.klv2
+quackle entries 914624 klv entries 914624
+common 914624 q only 0
+pearson 0.977 mean q -5.35 mean k -2.68
+len 1 n 27 mean(q-k) -1.12 rms 1.88
+len 2 n 373 mean(q-k) -1.84 rms 2.73
+len 3 n 3509 mean(q-k) -2.31 rms 3.33
+len 4 n 25254 mean(q-k) -2.60 rms 3.80
+len 5 n 148150 mean(q-k) -2.71 rms 4.19
+len 6 n 737311 mean(q-k) -2.67 rms 4.57
+
+## reference/quackle/data/strategy/csw/superleaves vs data/wolges/CSW24.klv2
+cf20c38578cfd6263d494e2748cf96b4028e3e9ff77812a5e4efc082c4ab3797  reference/quackle/data/strategy/csw/superleaves
+b0ef5f6637cca0cd8e0962d6fb7d35b2d22f9bf648015f48fa8f80e24a60610b  data/wolges/CSW24.klv2
+quackle entries 914624 klv entries 914624
+common 914624 q only 0
+pearson 0.979 mean q -5.35 mean k -3.92
+len 1 n 27 mean(q-k) -0.44 rms 1.42
+len 2 n 373 mean(q-k) -0.73 rms 2.02
+len 3 n 3509 mean(q-k) -0.98 rms 2.50
+len 4 n 25254 mean(q-k) -1.18 rms 2.94
+len 5 n 148150 mean(q-k) -1.35 rms 3.38
+len 6 n 737311 mean(q-k) -1.46 rms 3.88
+
