@@ -40,7 +40,9 @@ for the current work.
 
 - Quackle, Macondo and MAGPIE are GPL-3.0. wolges is MIT. Copying code from a GPL engine
   makes our engine GPL. Reading it to learn is fine. Don't paste GPL code into this repo
-  until `docs/decisions/0001-fork-base-and-licence.md` is decided.
+  until the fork base in `docs/decisions/0001-fork-base-and-licence.md` is decided (the
+  licence part is settled: GPL acceptable, MIT preferred). Test tools that link a GPL
+  engine (e.g. `harness/adapters/quackle/`) stay in their own directory with a GPL note.
 - Word lists (NWL, CSW, etc.) are copyrighted. Never commit lexicon files or built
   GADDAG/KWG files. Keep them under `data/` (git-ignored).
 - Closed engines (Elise, Maven): black-box testing is fine. Before decompiling or
