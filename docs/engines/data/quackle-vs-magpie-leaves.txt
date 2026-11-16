@@ -1,0 +1,21 @@
+quackle entries 914624 klv entries 914624
+common 914624 q only 0
+pearson 0.977 mean q -5.35 mean k -2.68
+len 1 n 27 mean(q-k) -1.12 rms 1.88
+len 2 n 373 mean(q-k) -1.84 rms 2.73
+len 3 n 3509 mean(q-k) -2.31 rms 3.33
+len 4 n 25254 mean(q-k) -2.60 rms 3.80
+len 5 n 148150 mean(q-k) -2.71 rms 4.19
+len 6 n 737311 mean(q-k) -2.67 rms 4.57
+? 27.95 27.97
+S 8.56 9.37
+Z 3.89 9.54
+Q -8.85 -6.57
+V -6.5 -5.88
+U -5.92 -4.13
+QU 2.75 3.33
+ERS 19.26 18.68
+?S 35.02 35.04
+AEINST 35.7 34.07
+EIIOU -28.34 -22.58
+?ERS 42.93 41.73
