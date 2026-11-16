@@ -27,6 +27,10 @@ What happens from "here is a position" to "here is a move", step by step, with
 
 Command, hardware, numbers. Moves/second, sims/second, endgame solve times.
 
+## History
+
+Short summary; the full write-up lives in `<engine>-history.md`.
+
 ## Inference
 
 What we think the design choices mean. Kept apart from the facts above.

@@ -12,6 +12,8 @@ repos=(
   "magpie   https://github.com/jvc56/MAGPIE.git"
   "wolges   https://github.com/andy-k/wolges.git"
   "liwords  https://github.com/woogles-io/liwords.git"
+  "stockfish     https://github.com/official-stockfish/Stockfish.git"
+  "nnue-pytorch  https://github.com/official-stockfish/nnue-pytorch.git"
 )
 
 printf "name\turl\tcommit\tdate\n" > "$ref/PINS.tsv"

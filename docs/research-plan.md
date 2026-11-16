@@ -23,6 +23,28 @@ One dossier per engine in `docs/engines/` (template: `_template.md`). For each:
 
 Engines: Quackle, Macondo, MAGPIE, wolges, Elise, Maven. See `docs/engines/README.md`.
 
+### R1b. Engine history: why things changed
+
+How an engine got strong tells us more than its current code. For each open engine,
+write `docs/engines/<engine>-history.md` from its commits, pull requests and issues
+(exported by `scripts/fetch-history.sh` into `reference/history/<engine>/`):
+
+- **Timeline of major changes**: when move generation, leaves, simulation, endgame and
+  so on were added or rewritten, with PR/commit links.
+- **Why each change was made**, in the authors' words where possible (PR body, review
+  thread, issue).
+- **Measured effect**: any win %, spread, speed or Elo numbers given for a change, and
+  how they were measured.
+- **Failed and abandoned experiments**: PRs closed without merging, reverts, ideas
+  tried and dropped. Negative results save us repeating them. Record why they failed if
+  anyone said.
+- **Ideas from one engine that later spread to another** (e.g. Macondo → MAGPIE,
+  wolges formats adopted by Woogles).
+- **Open issues about strength or known weaknesses.**
+
+Same treatment for Stockfish in R3: its commit messages carry the SPRT results of each
+patch, and fishtest holds the record of tests that failed.
+
 ## R2. Test harness: playing engines against each other
 
 Before we write an engine we need a way to measure one.

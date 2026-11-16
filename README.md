@@ -38,5 +38,6 @@ No engine code yet. The work now is in [docs/research-plan.md](docs/research-pla
 
 ```bash
 scripts/check-tools.sh        # what's installed, what's missing
-scripts/fetch-references.sh   # clone the open-source engines into reference/
+scripts/fetch-references.sh   # clone the open-source engines (and Stockfish) into reference/
+scripts/fetch-history.sh      # export commits, PRs, issues and review threads to reference/history/
 ```

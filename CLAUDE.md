@@ -26,6 +26,15 @@ for the current work.
   clone and record the patch in the dossier.
 - Pinned SHAs are recorded in `reference/PINS.tsv` and copied to
   `docs/engines/pins.tsv` so notes stay reproducible.
+- `reference/history/<name>/` (from `scripts/fetch-history.sh`) holds each repo's
+  history: `commits.tsv`, `commits-full.txt`, `prs.json`, `prs-index.tsv` (one line per
+  PR: number, date, MERGED/CLOSED/OPEN, author, title), `issues.json`, and
+  `pr-comments/<n>.json` (review threads and diff size). Start from `prs-index.tsv`;
+  CLOSED means closed without a GitHub merge, usually an abandoned experiment.
+  Exception: Stockfish maintainers commit patches directly and close the PR, so most
+  accepted Stockfish PRs show CLOSED. Check its commit messages ("closes #n") to tell
+  accepted from rejected. wolges PRs are all self-merged by its author.
+- History write-ups cite PRs as `owner/repo#n` and commits by short SHA.
 
 ## Licences and data
 
