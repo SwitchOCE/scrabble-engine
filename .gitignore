@@ -1,0 +1,19 @@
+# Clones of other engines (see scripts/fetch-references.sh)
+/reference/*
+!/reference/README.md
+
+# Lexicons, built word graphs, game corpora, model weights
+/data/
+*.kwg
+*.klv2
+*.gaddag
+*.dawg
+
+# Local builds and tool output
+/build/
+/target/
+/tmp/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
